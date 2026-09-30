@@ -1,7 +1,7 @@
 {
   "name": "apex-fitness-assistant-frontend",
   "version": "1.0.0",
-  "description": "Chat UI for the Apex Fitness Club assistant (Assignment 1)",
+  "description": "Chat UI for the Zor Fitness Club assistant (Assignments 1-2)",
   "private": true,
   "type": "module",
   "scripts": {

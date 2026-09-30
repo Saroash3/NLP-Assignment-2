@@ -10,10 +10,10 @@ import { TRAINERS, FACILITIES } from "../data/gymData";
 gsap.registerPlugin(ScrollTrigger);
 
 const STATS = [
-  { label: "Active Members", value: 500, suffix: "+" },
-  { label: "Weekly Classes", value: 30, suffix: "+" },
-  { label: "Expert Trainers", value: 5, suffix: "" },
-  { label: "Years Running", value: 8, suffix: "" },
+  { label: "Branches", value: 3, suffix: "" },
+  { label: "Weekly Classes", value: 17, suffix: "" },
+  { label: "Expert Coaches", value: 9, suffix: "" },
+  { label: "Years Running", value: 7, suffix: "" },
 ];
 
 export function Landing({ onEnter }: { onEnter: () => void }) {
@@ -89,7 +89,7 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            APEX FITNESS CLUB
+            ZOR FITNESS CLUB · ISLAMABAD & RAWALPINDI
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -142,7 +142,7 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
         <span className="section-eyebrow">Our Coaches</span>
         <h2>Meet the Team</h2>
         <p className="section-subtitle">
-          Five specialists, one front desk. Ask Nova about any of them.
+          Nine specialists, one front desk. Ask Nova about any of them.
         </p>
         <div className="trainer-grid">
           {TRAINERS.map((trainer) => (
@@ -152,10 +152,10 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
       </section>
 
       <section className="facilities" ref={facilitySectionRef}>
-        <span className="section-eyebrow">Inside Apex</span>
+        <span className="section-eyebrow">Inside Zor</span>
         <h2>Everything You Need, Under One Roof</h2>
         <p className="section-subtitle">
-          From lap swimming to recovery, the full facility is included in your visit.
+          Three branches: F-7 and G-11 Islamabad, and Bahria Town Phase 7 Rawalpindi.
         </p>
         <div className="facility-grid">
           {FACILITIES.map((facility) => (

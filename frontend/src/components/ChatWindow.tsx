@@ -47,7 +47,7 @@ export function ChatWindow({ onExit }: { onExit: () => void }) {
         </button>
         <div className="chat-header__title">
           <span className="chat-header__name">Nova</span>
-          <span className="chat-header__sub">Apex Fitness Club Assistant</span>
+          <span className="chat-header__sub">Zor Fitness Club Assistant</span>
         </div>
         <StageBadge stage={stage} />
         <button className="ghost-button" onClick={resetSession} disabled={status !== "open"}>
