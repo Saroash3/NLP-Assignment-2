@@ -27,7 +27,7 @@ _ON_TOPIC_STATS = GenerationStats(time_to_first_token_s=0.001, total_time_s=0.00
 class FakeLLMEngine:
     """Yields a canned reply word-by-word; optional delay simulates streaming latency."""
 
-    def __init__(self, reply: str = "Welcome to Apex Fitness Club! How can I help?", delay: float = 0.0):
+    def __init__(self, reply: str = "Welcome to Zor Fitness Club! How can I help?", delay: float = 0.0):
         self.reply = reply
         self.delay = delay
 

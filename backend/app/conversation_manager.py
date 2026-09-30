@@ -14,10 +14,21 @@ max_history_turns), not a rolling LLM-generated summary. Chosen because:
   2. Gym front-desk conversations are naturally short and transactional --
      a handful of turns to book a class or compare plans -- so they
      rarely approach the window size in practice.
-  3. All static domain knowledge (pricing, schedules, policies) already
-     lives in the system prompt, not in history, so trimming old turns
-     never makes the assistant "forget" a fact -- only the specifics of
-     small talk from many turns back, which is an acceptable tradeoff.
+  3. Domain knowledge (pricing, schedules, policies) is retrieved fresh
+     from the documents on every turn (RAG), not carried in history, so
+     trimming old turns never makes the assistant "forget" a fact -- only
+     the specifics of small talk from many turns back.
+
+RAG + CONTEXT BUDGET (Assignment 2) -- see retrieve_context() and
+build_prompt_messages(). Every prompt must fit in num_ctx (4096 tokens):
+  reply space (num_predict)  500   always reserved
+  system prompt             ~1559  fixed
+  scope reminder              ~92  fixed
+  user message             actual  always kept
+  sources (chunks)         <=1200  lowest-ranked chunk dropped first
+  history              the rest    oldest messages dropped first
+Tokens are counted with Qwen2.5's own tokenizer (+5 per message for the
+chat template), which matched Ollama's prompt_eval_count within ~1%.
 
 The `stage` field on a Session is a best-effort heuristic used ONLY to
 drive a cosmetic "stage" badge in the frontend UI. It does not gate what
@@ -39,6 +50,8 @@ guidance the rest of this module still follows.
 """
 from __future__ import annotations
 
+import asyncio
+import logging
 import random
 import re
 import time
@@ -46,6 +59,7 @@ import uuid
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import lru_cache
 
 from app.config import get_settings
 from app.llm_engine import LLMEngine
@@ -53,8 +67,12 @@ from app.prompts import (
     OFF_TOPIC_REDIRECTS,
     SCOPE_REMINDER,
     build_classification_messages,
+    build_context_message,
     build_system_prompt,
 )
+from rag import retriever
+
+logger = logging.getLogger("zor_assistant")
 
 SYSTEM_PROMPT = build_system_prompt()
 
@@ -62,6 +80,36 @@ SYSTEM_PROMPT = build_system_prompt()
 # one of two words, so it should be both fast and as deterministic as possible.
 CLASSIFIER_NUM_PREDICT = 10
 CLASSIFIER_TEMPERATURE = 0.0
+
+# --- RAG settings (see the module docstring for the full budget) ---
+CHUNK_TOKEN_BUDGET = 1200  # max tokens for the SOURCES message (4 chunks usually cost 930-1180)
+PER_MESSAGE_OVERHEAD = 5  # chat-template tokens Qwen adds around each message
+# Follow-ups like "and for ladies?" mean nothing on their own, so a message this short is
+# embedded together with the previous user message. Longer messages are embedded alone, so
+# a real topic switch isn't dragged back to the old topic (tested in README section 6).
+FOLLOW_UP_MAX_WORDS = 6
+# Longest user message kept in the prompt (see truncate_user_message). With it, the fixed
+# parts are at most 500 + ~1559 + ~92 + 1000 tokens, which still leaves ~900 for sources.
+MAX_USER_TOKENS = 1000
+
+
+@lru_cache(maxsize=1)
+def _qwen_tokenizer():
+    """Qwen2.5's own tokenizer (local after a one-time ~7 MB download). None if unavailable."""
+    try:
+        from transformers import AutoTokenizer
+
+        return AutoTokenizer.from_pretrained("Qwen/Qwen2.5-3B-Instruct")
+    except Exception:
+        logger.warning("Qwen tokenizer unavailable; using a conservative length estimate")
+        return None
+
+
+def count_tokens(text: str) -> int:
+    """Tokens one chat message will use in the prompt (content + template overhead)."""
+    tokenizer = _qwen_tokenizer()
+    content = len(tokenizer.encode(text)) if tokenizer else len(text) // 3  # fallback over-estimates
+    return content + PER_MESSAGE_OVERHEAD
 
 
 class Stage(str, Enum):
@@ -179,22 +227,135 @@ class ConversationManager:
             return random.choice(OFF_TOPIC_REDIRECTS)
         return None
 
-    def build_prompt_messages(self, session: Session, user_text: str) -> list[dict[str, str]]:
+    # --- RAG: retrieval ---
+
+    def retrieval_query(self, session: Session, user_text: str) -> str:
+        """The text to embed: short follow-ups get the previous user message prepended."""
+        previous = next((m.content for m in reversed(session.history) if m.role == "user"), None)
+        if previous and len(user_text.split()) <= FOLLOW_UP_MAX_WORDS:
+            return f"{previous} {user_text}"
+        return user_text
+
+    async def retrieve_context(self, session: Session, user_text: str) -> list[dict] | None:
         """
-        Assemble the exact message list to send to the LLM: system prompt +
-        sliding window of prior turns + the new user message. The new
-        message is NOT written into session.history here -- callers append
-        the real user/assistant pair only after a successful generation
-        (see main.py), so a failed generation never corrupts history.
+        Retrieve the top-k chunks for this message and keep only those above the
+        similarity threshold. Embedding + vector search are CPU-bound, so they run in
+        a worker thread (asyncio.to_thread) and never block the event loop.
+        Returns:
+          [chunks...]  relevant chunks found
+          []           retrieval worked, but nothing passed the threshold (no match)
+          None         retrieval FAILED (index missing/corrupted/empty, embedding error,
+                       or slower than retrieval_timeout_s). The error is logged and the
+                       reply continues with the "retrieval unavailable" note -- the chat
+                       never crashes or hangs because of retrieval.
         """
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        messages.extend({"role": m.role, "content": m.content} for m in session.history)
-        # "Sandwiching": repeat the scope rule as a second system message immediately
-        # before the final user turn, not just once at the top of a long system prompt.
-        # This is a fixed structural technique applied identically on every turn -- it
-        # never inspects what the user said, so it's still pure prompt orchestration --
-        # but it noticeably improves a small model's odds of catching the scope rule,
-        # since it's the last instruction the model sees before generating.
+        settings = get_settings()
+        query = self.retrieval_query(session, user_text)
+        start = time.perf_counter()
+        try:
+            chunks = await asyncio.wait_for(
+                asyncio.to_thread(retriever.retrieve, query), timeout=settings.retrieval_timeout_s
+            )
+        except Exception as e:  # includes TimeoutError from wait_for
+            logger.warning("Retrieval unavailable (%s: %s); replying without documents",
+                           type(e).__name__, e)
+            return None
+        relevant = [c for c in chunks if c["score"] >= settings.similarity_threshold]
+        logger.info("Retrieval %.0f ms, query=%r -> %s", (time.perf_counter() - start) * 1000,
+                    query, [(c["source"], c["score"]) for c in chunks])
+        return relevant
+
+    def apply_retrieval_override(self, redirect: str | None, chunks: list[dict]) -> str | None:
+        """
+        The classifier sometimes rejects real gym questions (e.g. anything mentioning
+        "Bahria" or a trainer's name). If it said OFF_TOPIC (redirect is not None) but a
+        document matches strongly, trust the documents: return None = answer normally.
+        """
+        if redirect is not None and chunks:
+            best = chunks[0]["score"]
+            if best >= get_settings().classifier_override_score:
+                logger.info("Classifier said OFF_TOPIC, but %s matched at %.3f; answering "
+                            "from sources", chunks[0]["source"], best)
+                return None
+        return redirect
+
+    # --- Prompt assembly with the token budget ---
+
+    def select_chunks(self, chunks: list[dict], budget: int) -> list[dict]:
+        """Keep chunks best-first while the SOURCES message fits the budget; the
+        lowest-ranked chunks are the ones dropped."""
+        kept: list[dict] = []
+        for chunk in chunks:
+            if count_tokens(build_context_message(kept + [chunk])) > budget:
+                break
+            kept.append(chunk)
+        return kept
+
+    def truncate_user_message(self, user_text: str) -> str:
+        """
+        The API already caps messages at 2,000 characters, but Urdu script (and other
+        non-Latin text) costs far more tokens per character than English. Rule: a message
+        is capped at MAX_USER_TOKENS -- the beginning is kept (that's usually where the
+        question is) and a clear marker tells the model the rest was cut.
+        """
+        tokenizer = _qwen_tokenizer()
+        if count_tokens(user_text) <= MAX_USER_TOKENS:
+            return user_text
+        if tokenizer:
+            kept = tokenizer.decode(tokenizer.encode(user_text)[: MAX_USER_TOKENS - 20])
+        else:
+            kept = user_text[: MAX_USER_TOKENS * 3]
+        logger.info("User message truncated to %d tokens", MAX_USER_TOKENS)
+        return kept + " …[message truncated: it was too long]"
+
+    def build_prompt_messages(
+        self, session: Session, user_text: str, chunks: list[dict] | None = ()
+    ) -> list[dict[str, str]]:
+        """
+        Assemble the exact message list to send to the LLM:
+          [system prompt] + [history, oldest trimmed to fit] + [SOURCES or no-match note]
+          + [scope reminder] + [user message]
+        The static system prompt + history come first so they form the same prefix every
+        turn (Ollama can reuse its cache); the per-turn sources come last, right next to
+        the question. The new message is NOT written into session.history here -- callers
+        append the real user/assistant pair only after a successful generation (see
+        main.py), so a failed generation never corrupts history.
+        """
+        settings = get_settings()
+        user_text = self.truncate_user_message(user_text)
+        # Tokens left for sources + history after the parts that are always included.
+        # The system prompt is counted FIRST and always kept whole -- it is never what gets cut.
+        available = (
+            settings.num_ctx
+            - settings.num_predict  # reply space
+            - count_tokens(SYSTEM_PROMPT)
+            - count_tokens(SCOPE_REMINDER)
+            - count_tokens(user_text)
+        )
+
+        # Step 1: sources. Drop the lowest-ranked chunks until they fit their own budget
+        # (and whatever space is really left, in case the user message was huge).
+        if chunks is None:  # retrieval failed: send the "unavailable" note, not "no match"
+            context = build_context_message(None)
+        else:
+            kept = self.select_chunks(chunks, min(CHUNK_TOKEN_BUDGET, available))
+            context = build_context_message(kept)
+        available -= count_tokens(context)
+
+        # Step 2: history. Walk newest -> oldest and stop when the next message won't fit,
+        # so the OLDEST messages are the ones trimmed.
+        history: list[dict[str, str]] = []
+        for m in reversed(session.history):
+            cost = count_tokens(m.content)
+            if cost > available:
+                break
+            history.insert(0, {"role": m.role, "content": m.content})
+            available -= cost
+
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}, *history]
+        messages.append({"role": "system", "content": context})
+        # "Sandwiching": repeat the scope rule as a system message immediately before the
+        # final user turn -- the last instruction the small model sees before generating.
         messages.append({"role": "system", "content": SCOPE_REMINDER})
         messages.append({"role": "user", "content": user_text})
         return messages

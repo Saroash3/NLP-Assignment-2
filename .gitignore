@@ -15,3 +15,10 @@ frontend/.env.local
 Thumbs.db
 .vscode/
 .idea/
+
+# RAG: local vector store (rebuilt by python -m rag.index) and model caches
+backend/rag/chroma_db/
+**/.cache/
+*.safetensors
+*.gguf
+**/__pycache__/

@@ -34,7 +34,7 @@ def test_prompt_messages_always_start_with_system_prompt():
     session = cm.create_session()
     messages = cm.build_prompt_messages(session, "Hi, what classes do you have?")
     assert messages[0]["role"] == "system"
-    assert "Apex Fitness Club" in messages[0]["content"]
+    assert "Zor Fitness Club" in messages[0]["content"]
     assert messages[-1] == {"role": "user", "content": "Hi, what classes do you have?"}
 
 
@@ -50,7 +50,7 @@ def test_build_prompt_messages_does_not_mutate_history():
 def test_record_turn_appends_user_and_assistant_messages():
     cm = ConversationManager()
     session = cm.create_session()
-    cm.record_turn(session, "Hi there", "Welcome to Apex Fitness Club!")
+    cm.record_turn(session, "Hi there", "Welcome to Zor Fitness Club!")
     assert len(session.history) == 2
     assert session.history[0].role == "user"
     assert session.history[0].content == "Hi there"

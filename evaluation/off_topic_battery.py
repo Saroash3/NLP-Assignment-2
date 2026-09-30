@@ -38,6 +38,7 @@ sys.path.insert(0, str(BACKEND_DIR))
 from app.config import get_settings  # noqa: E402
 from app.conversation_manager import ConversationManager  # noqa: E402
 from app.llm_engine import LLMEngine  # noqa: E402
+from rag import retriever  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -56,10 +57,10 @@ TEST_CASES: list[TestCase] = [
         "on_topic",
         "ON_TOPIC",
     ),
-    TestCase("Can you tell me about Maya Chen and what she teaches?", "on_topic", "ON_TOPIC"),
+    TestCase("Can you tell me about Sana Iftikhar and what she teaches?", "on_topic", "ON_TOPIC"),
     TestCase("I'd like to book the HIIT Blast class this week", "on_topic", "ON_TOPIC"),
     TestCase("What are your opening hours?", "on_topic", "ON_TOPIC"),
-    TestCase("Where is Apex Fitness Club located?", "on_topic", "ON_TOPIC"),
+    TestCase("Where is Zor Fitness Club located?", "on_topic", "ON_TOPIC"),
     TestCase("Do you have a swimming pool?", "on_topic", "ON_TOPIC"),
     TestCase("What's your policy on freezing a membership?", "on_topic", "ON_TOPIC"),
     TestCase("Can I bring a guest with me?", "on_topic", "ON_TOPIC"),
@@ -101,7 +102,7 @@ TEST_CASES: list[TestCase] = [
         "gym-adjacent retail question",
     ),
     TestCase(
-        "Is Apex Fitness Club hiring right now?",
+        "Is Zor Fitness Club hiring right now?",
         "ambiguous",
         "ON_TOPIC",
         "about the business itself, not an external topic",
@@ -145,9 +146,18 @@ async def run_battery() -> list[dict]:
         await engine.aclose()
         sys.exit(1)
 
+    retriever.load()  # load the embedding model up front, like the server's startup does
+
     results = []
     for i, case in enumerate(TEST_CASES, start=1):
-        redirect = await conversation_manager.classify_off_topic(engine, case.text)
+        # Same routing as main.py (Assignment 2): classifier and retrieval in parallel, then
+        # a strong document match (>= classifier_override_score) overrides an OFF_TOPIC verdict.
+        session = conversation_manager.create_session()
+        redirect, chunks = await asyncio.gather(
+            conversation_manager.classify_off_topic(engine, case.text),
+            conversation_manager.retrieve_context(session, case.text),
+        )
+        redirect = conversation_manager.apply_retrieval_override(redirect, chunks)
         actual = "OFF_TOPIC" if redirect is not None else "ON_TOPIC"
         passed = actual == case.expected
         mark = "PASS" if passed else "FAIL"
@@ -176,6 +186,9 @@ def render_report(results: list[dict]) -> str:
         f"### Off-topic battery run -- {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
         "",
         f"Model: `{settings.model_name}` via Ollama at `{settings.ollama_host}`",
+        "",
+        f"Routing = classifier + retrieval override (top chunk >= "
+        f"{settings.classifier_override_score}), as in the live backend.",
         "",
     ]
 

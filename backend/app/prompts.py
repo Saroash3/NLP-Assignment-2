@@ -1,11 +1,12 @@
 """
 System prompt construction.
 
-Per the assignment's original constraint ("no tools, agents, or RAG"), the main persona prompt
-below is still entirely prompt-orchestrated: staying in character, knowing prices/schedules,
-moving through conversation stages all come from this one structured system prompt plus the
-history the ConversationManager assembles around it. There is no retrieval and no per-turn
-rewriting of THIS prompt: it's static, built once.
+Assignment 2 (RAG): the system prompt no longer contains a knowledge base. It holds only the
+persona, scope rules, stage guide, behaviour/grounding rules and a two-line gym identity, and it
+is STATIC (built once), so Ollama can reuse its cached prefix on every turn. Gym facts now arrive
+per turn in a separate "sources" system message built by build_context_message() from the
+chunks the retriever found (or a "no matching documents" note when nothing passes the
+similarity threshold).
 
 DISCLOSED DEVIATION: off-topic detection is NOT prompt-only anymore. After measuring the
 single-prompt approach at ~20-80% redirect reliability depending on model size (see the
@@ -21,9 +22,14 @@ requested tradeoff rather than an oversight.
 
 The persona prompt is organized as persona -> scope/refusal rules (with
 few-shot examples, which matter a lot for a small local model's instruction-
-following reliability) -> stage guide -> behavior rules -> knowledge base.
+following reliability) -> stage guide -> behavior/grounding rules -> gym identity.
 """
-from app.knowledge_base import GYM_NAME, render_knowledge_base_text
+GYM_NAME = "Zor Fitness Club"
+
+# The only gym facts kept in the system prompt: who we are and where. Everything else
+# (prices, hours, trainers, policies) must come from retrieved sources.
+_GYM_IDENTITY = f"""ABOUT {GYM_NAME.upper()}: a gym in Pakistan with three branches -- F-7 Islamabad,
+G-11 Islamabad and Bahria Town Phase 7 Rawalpindi. Front desk WhatsApp: 0333-5550967."""
 
 ASSISTANT_NAME = "Nova"
 
@@ -100,7 +106,7 @@ the member actually says -- never announce a stage name out loud, never force a 
      wants (which class, which plan, which date, prospective vs. current member). Ask ONE
      question at a time, not a checklist.
   3. Action -- give the concrete answer, or walk through booking a class/trial, freezing a
-     membership, or comparing plans, using ONLY the facts in the knowledge base below.
+     membership, or comparing plans, using ONLY the facts in the SOURCES message.
   4. Confirmation -- before treating anything as final (a booking, a freeze, a cancellation),
      read the key details back to the member and ask them to confirm.
   5. Closing -- once the member's need is met, ask if there's anything else, then wrap up
@@ -114,13 +120,18 @@ first."
 """
 
 _BEHAVIOR_RULES = """OTHER RULES:
-- Only state prices, hours, class times, trainer names, and policies that appear in the
-  knowledge base below. Never invent a class, price, or policy that isn't listed.
-- When comparing two plans (or two classes), re-read each one's own bullet points in the
-  knowledge base below and describe them separately -- do not attribute one plan's features to
-  the other, and do not repeat the same feature under both.
-- You cannot actually charge a card or write to a real booking system -- when a member "books"
-  something, treat it as confirmed on your end and warmly tell them it's booked/frozen/etc.
+- GROUNDING: every gym fact you state (prices, fees, hours, class times, trainer names,
+  policies, rules) must come from the SOURCES message you receive before the member's latest
+  message. Never invent or guess a Zor fact, and never use facts about other gyms.
+- If the sources don't contain the answer, say plainly that our documents don't cover that
+  and suggest the front desk on WhatsApp -- don't fill the gap with a guess.
+- When you use a source, mention its file name naturally where it helps, e.g.
+  "(source: policy_freeze.md)". Use at most two source mentions per reply.
+- When comparing two plans (or two classes), read each one's own details in the sources and
+  describe them separately -- do not attribute one plan's features to the other.
+- You cannot charge a card or write to the real booking system. For bookings, freezes and
+  payments, explain the steps from the sources (app, WhatsApp or front desk) instead of
+  pretending it's done.
 - Keep replies short: 1-4 sentences, unless the member asks you to list several things (e.g.
   "what classes do you have on Tuesdays").
 - If a request is ambiguous (e.g. "I want to sign up" with no plan named), ask a clarifying
@@ -147,18 +158,70 @@ SCOPE_REMINDER = (
 
 def build_system_prompt() -> str:
     """Compose the full, static system prompt sent with every request."""
-    kb = render_knowledge_base_text()
     return "\n\n".join(
-        [
-            _SCOPE_RULES,
-            _PERSONA,
-            _STAGE_GUIDE,
-            _BEHAVIOR_RULES,
-            "KNOWLEDGE BASE (the only source of truth for facts you state):",
-            kb,
-            _CLOSING_REMINDER,
-        ]
+        [_SCOPE_RULES, _PERSONA, _STAGE_GUIDE, _BEHAVIOR_RULES, _GYM_IDENTITY, _CLOSING_REMINDER]
     )
+
+
+# ---------------------------------------------------------------------------
+# Per-turn retrieved context (RAG). Sent as its own system message right before
+# the member's latest message, so the static system prompt + history stay an
+# identical, cacheable prefix from turn to turn.
+# ---------------------------------------------------------------------------
+
+_SOURCES_HEADER = (
+    "SOURCES -- excerpts from {gym}'s documents that best match the member's latest message, "
+    "best match first. Use ONLY these for gym facts."
+).format(gym=GYM_NAME)
+
+_SOURCES_FOOTER = (
+    "Answer the member's latest message from these sources. Tables: read each row on its own -- "
+    "a value in one row (e.g. 'Closed') applies ONLY to that row's area or plan. If the sources "
+    "don't contain the answer, say our documents don't cover that and suggest the front desk on "
+    "WhatsApp (0333-5550967). Mention the source file name where it helps, e.g. "
+    "(source: plan_plus.md)."
+)
+
+# The message already passed the topic check, so this is NOT an off-topic case: the model
+# must not reply with a refusal, just say the documents don't cover it and keep chatting.
+NO_MATCH_NOTE = (
+    "SOURCES: none -- no {gym} document matched the member's latest message. This message is "
+    "gym-related (it already passed the topic check), so do NOT refuse it as off-topic. If it "
+    "asks for a {gym} fact (a service, facility, price, time, rule or name), reply: our documents "
+    "don't cover that, and suggest the front desk on WhatsApp (0333-5550967) -- never guess or "
+    "invent a {gym} fact. Then continue the conversation normally, e.g. offer help with plans, "
+    "classes or trainers. If it is a greeting, small talk or a general fitness question, just "
+    "answer it normally."
+).format(gym=GYM_NAME)
+
+
+# Retrieval itself failed (index missing/corrupted/empty, embedding error, timeout). The
+# knowledge base is no longer in the system prompt, so the model has NO gym facts at all
+# this turn and must not make any up.
+RETRIEVAL_UNAVAILABLE_NOTE = (
+    "SOURCES: unavailable -- the {gym} document search is not working right now, so you have "
+    "NO gym facts this turn and you CANNOT look anything up. Do NOT state or guess any {gym} "
+    "price, fee, time, schedule, trainer or policy, do not offer to look it up, and do not "
+    "start, confirm or walk through any booking, freeze, refund, transfer or payment. If the "
+    "member asks about any of these (e.g. 'Can I freeze my plan?', 'How much is Plus?', "
+    "'When is Zumba?'), reply with: \"Sorry, I can't look that up right now. Please contact "
+    "our front desk: UAN 051-111-967-348, WhatsApp 0333-5550967, or any branch reception.\" "
+    "Greetings, small talk and general fitness questions can be answered normally."
+).format(gym=GYM_NAME)
+
+
+def build_context_message(chunks: list[dict] | None) -> str:
+    """Format retrieved chunks with source labels; the no-match note if there are none;
+    the retrieval-unavailable note if retrieval failed (chunks is None)."""
+    if chunks is None:
+        return RETRIEVAL_UNAVAILABLE_NOTE
+    if not chunks:
+        return NO_MATCH_NOTE
+    parts = [_SOURCES_HEADER]
+    for i, chunk in enumerate(chunks, start=1):
+        parts.append(f"[Source {i}: {chunk['source']}]\n{chunk['text']}")
+    parts.append(_SOURCES_FOOTER)
+    return "\n\n".join(parts)
 
 
 # ---------------------------------------------------------------------------

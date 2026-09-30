@@ -6,6 +6,10 @@ pydantic-settings>=2.5
 python-dotenv>=1.0
 websockets>=13.0
 
+# RAG (Assignment 2): local CPU embeddings + local vector store
+sentence-transformers>=3.0
+chromadb>=1.0
+
 # testing
 pytest>=8.3
 pytest-asyncio>=0.24

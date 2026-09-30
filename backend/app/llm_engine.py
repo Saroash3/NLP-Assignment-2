@@ -61,6 +61,7 @@ class LLMEngine:
         self._temperature = settings.temperature
         self._top_p = settings.top_p
         self._num_predict = settings.num_predict
+        self._num_ctx = settings.num_ctx
         self._client = client or httpx.AsyncClient(timeout=self._timeout)
         self._owns_client = client is None
 
@@ -100,6 +101,8 @@ class LLMEngine:
                 "temperature": temperature if temperature is not None else self._temperature,
                 "top_p": self._top_p,
                 "num_predict": num_predict if num_predict is not None else self._num_predict,
+                # Always sent explicitly so the context window never depends on Ollama's default.
+                "num_ctx": self._num_ctx,
             },
         }
         try:

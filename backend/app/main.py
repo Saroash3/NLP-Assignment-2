@@ -7,6 +7,7 @@ here (see conversation_manager.py / prompts.py).
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -15,8 +16,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ValidationError
 
 from app.config import get_settings
-from app.conversation_manager import ConversationManager
+from app.conversation_manager import ConversationManager, _qwen_tokenizer
 from app.llm_engine import LLMEngine, LLMEngineError
+from rag import retriever
 from app.schemas import (
     ClientMessage,
     ClientMessageType,
@@ -28,19 +30,29 @@ from app.schemas import (
     TokenEvent,
 )
 
-logger = logging.getLogger("apex_assistant")
+logger = logging.getLogger("zor_assistant")
+# Show our INFO logs (e.g. which sources were retrieved per turn) next to uvicorn's.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.conversation_manager = ConversationManager()
     app.state.llm_engine = LLMEngine()
-    logger.info("Apex Fitness Assistant API starting up (model=%s)", get_settings().model_name)
+    # Load the embedding model, the Chroma collection and the Qwen tokenizer ONCE, here,
+    # (in a thread so startup doesn't block the loop) -- never per request. If this fails
+    # the server still starts; each request then falls back to answering without documents.
+    try:
+        await asyncio.to_thread(retriever.load)
+        await asyncio.to_thread(_qwen_tokenizer)
+    except Exception:
+        logger.exception("RAG components failed to load; continuing without retrieval")
+    logger.info("Zor Fitness Assistant API starting up (model=%s)", get_settings().model_name)
     yield
     await app.state.llm_engine.aclose()
 
 
-app = FastAPI(title="Apex Fitness Assistant API", lifespan=lifespan)
+app = FastAPI(title="Zor Fitness Assistant API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -97,11 +109,17 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
 
             try:
                 client_msg = ClientMessage.model_validate_json(raw)
-            except ValidationError:
+            except ValidationError as e:
+                # Same error event and code as Assignment 1; only the text is clearer when the
+                # message is simply over the 2,000-character limit.
+                too_long = any(err["type"] == "string_too_long" for err in e.errors())
                 await _send(
                     websocket,
                     ErrorEvent(
-                        message="Malformed request: could not parse that as a valid chat message.",
+                        message="That message is too long (the limit is 2,000 characters). "
+                        "Please shorten it and ask again."
+                        if too_long
+                        else "Malformed request: could not parse that as a valid chat message.",
                         code="bad_request",
                     ),
                 )
@@ -142,10 +160,16 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
 
             session.is_generating = True
             try:
-                # Stage 1 of the two-stage pipeline: classify before generating a real
-                # reply. See ConversationManager.classify_off_topic and prompts.py's
-                # module docstring for why this exists and what it costs in latency.
-                redirect = await conversation_manager.classify_off_topic(llm_engine, user_text)
+                # Stage 1 of the two-stage pipeline (classify) runs IN PARALLEL with
+                # retrieval: the classifier is an LLM call (a few hundred ms) and retrieval
+                # runs in a worker thread (tens of ms), so retrieval adds ~0 ms to the wait.
+                # If the message is off-topic, the retrieved chunks are simply unused.
+                redirect, chunks = await asyncio.gather(
+                    conversation_manager.classify_off_topic(llm_engine, user_text),
+                    conversation_manager.retrieve_context(session, user_text),
+                )
+                # A strong document match overrides a (wrong) OFF_TOPIC verdict.
+                redirect = conversation_manager.apply_retrieval_override(redirect, chunks)
 
                 if redirect is not None:
                     # Off-topic: skip the real generation call entirely and "stream" the
@@ -156,7 +180,9 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
                     conversation_manager.record_turn(session, user_text, redirect)
                     await _send(websocket, DoneEvent(stage=session.stage.value))
                 else:
-                    prompt_messages = conversation_manager.build_prompt_messages(session, user_text)
+                    prompt_messages = conversation_manager.build_prompt_messages(
+                        session, user_text, chunks
+                    )
                     reply_chunks: list[str] = []
                     async for token in llm_engine.stream_chat(prompt_messages):
                         reply_chunks.append(token)
