@@ -89,6 +89,12 @@ export function useChatSocket() {
           break;
         }
         case "done": {
+          // Citations (optional field): attach them to the reply that just finished streaming.
+          const finishedId = streamingIdRef.current;
+          const sources = data.sources;
+          if (finishedId && sources && sources.length > 0) {
+            setMessages((prev) => prev.map((m) => (m.id === finishedId ? { ...m, sources } : m)));
+          }
           setStage(data.stage);
           setIsStreaming(false);
           setAwaitingReply(false);

@@ -64,7 +64,8 @@ app.add_middleware(
 
 
 async def _send(websocket: WebSocket, event: BaseModel) -> None:
-    await websocket.send_json(event.model_dump())
+    # exclude_none: an optional field that isn't set (DoneEvent.sources) is left out of the JSON.
+    await websocket.send_json(event.model_dump(exclude_none=True))
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -180,7 +181,7 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
                     conversation_manager.record_turn(session, user_text, redirect)
                     await _send(websocket, DoneEvent(stage=session.stage.value))
                 else:
-                    prompt_messages = conversation_manager.build_prompt_messages(
+                    prompt_messages, used_sources = conversation_manager.build_prompt(
                         session, user_text, chunks
                     )
                     reply_chunks: list[str] = []
@@ -192,8 +193,16 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
                     if not full_reply:
                         full_reply = "Sorry, I didn't quite catch that -- could you rephrase?"
 
+                    # Citations, only when the answer was grounded in sources: a final
+                    # "Source: ..." line streamed as one more ordinary token, and the same list
+                    # in the optional `sources` field of `done` (for the UI chips).
+                    sources = conversation_manager.citations_for(used_sources, full_reply)
+                    if sources:
+                        await _send(websocket, TokenEvent(content=conversation_manager.source_line(sources)))
+                    # History keeps the reply WITHOUT the source line: otherwise the model copies
+                    # "Sources: ..." into its next answers and the line appears twice.
                     conversation_manager.record_turn(session, user_text, full_reply)
-                    await _send(websocket, DoneEvent(stage=session.stage.value))
+                    await _send(websocket, DoneEvent(stage=session.stage.value, sources=sources))
             except LLMEngineError as e:
                 await _send(websocket, ErrorEvent(message=str(e), code="llm_error"))
             finally:

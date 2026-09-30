@@ -125,8 +125,8 @@ _BEHAVIOR_RULES = """OTHER RULES:
   message. Never invent or guess a Zor fact, and never use facts about other gyms.
 - If the sources don't contain the answer, say plainly that our documents don't cover that
   and suggest the front desk on WhatsApp -- don't fill the gap with a guess.
-- When you use a source, mention its file name naturally where it helps, e.g.
-  "(source: policy_freeze.md)". Use at most two source mentions per reply.
+- Do NOT write file names or "Source:" lines yourself -- the system adds the source line
+  after your answer automatically.
 - When comparing two plans (or two classes), read each one's own details in the sources and
   describe them separately -- do not attribute one plan's features to the other.
 - You cannot charge a card or write to the real booking system. For bookings, freezes and
@@ -178,8 +178,7 @@ _SOURCES_FOOTER = (
     "Answer the member's latest message from these sources. Tables: read each row on its own -- "
     "a value in one row (e.g. 'Closed') applies ONLY to that row's area or plan. If the sources "
     "don't contain the answer, say our documents don't cover that and suggest the front desk on "
-    "WhatsApp (0333-5550967). Mention the source file name where it helps, e.g. "
-    "(source: plan_plus.md)."
+    "WhatsApp (0333-5550967). Don't mention file names -- the source line is added for you."
 )
 
 # The message already passed the topic check, so this is NOT an off-topic case: the model

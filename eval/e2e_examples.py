@@ -24,7 +24,7 @@ CONVERSATIONS = [
 ]
 
 
-async def ask(ws, text: str) -> tuple[str, float]:
+async def ask(ws, text: str) -> tuple[str, float, list | None]:
     await ws.send(json.dumps({"type": "message", "content": text}))
     start, first, reply = time.perf_counter(), None, []
     while True:
@@ -35,7 +35,8 @@ async def ask(ws, text: str) -> tuple[str, float]:
         elif event["type"] in ("done", "error"):
             if event["type"] == "error":
                 reply.append(f"[ERROR {event['code']}: {event['message']}]")
-            return "".join(reply).strip(), (first or time.perf_counter()) - start
+            # `sources` = the optional citations field on `done` (absent if not grounded)
+            return "".join(reply).strip(), (first or time.perf_counter()) - start, event.get("sources")
 
 
 async def main() -> None:
@@ -43,8 +44,9 @@ async def main() -> None:
         async with websockets.connect("ws://127.0.0.1:8000/ws/chat") as ws:
             await ws.recv()  # the initial "session" event
             for text in conversation:
-                reply, ttft = await ask(ws, text)
+                reply, ttft, sources = await ask(ws, text)
                 print(f"\nUSER: {text}\nNOVA ({ttft:.2f}s to first token): {reply}")
+                print(f"CITATION CHIPS: {sources if sources else '(none)'}")
         print("-" * 70)
 
 

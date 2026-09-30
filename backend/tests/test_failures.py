@@ -174,6 +174,12 @@ class Engine:
         return None
 
 
+def without_source_line(events):
+    """Event types, ignoring the server-added "Source: ..." token grounded answers end with."""
+    return [e["type"] for e in events
+            if not (e["type"] == "token" and e["content"].lstrip().startswith("Source"))]
+
+
 def exchange(ws, text):
     ws.send_json({"type": "message", "content": text})
     events = []
@@ -214,7 +220,7 @@ def test_roman_urdu_and_urdu_script_work_end_to_end(text):
         with client.websocket_connect("/ws/chat") as ws:
             ws.receive_json()
             events = exchange(ws, text)
-    assert [e["type"] for e in events] == ["token", "token", "done"]
+    assert without_source_line(events) == ["token", "token", "done"]
     assert engine.prompts[-1][-1]["content"] == text  # the text reaches the model unchanged
 
 
@@ -237,6 +243,6 @@ def test_one_clients_failure_does_not_affect_another_client(monkeypatch):
             # A: the LLM fails -> a clean error event, the socket stays open
             assert exchange(a, "CRASH please")[-1]["type"] == "error"
             # B is completely unaffected and gets the normal stream
-            assert [e["type"] for e in exchange(b, "How much is the Plus plan?")] == ["token", "token", "done"]
+            assert without_source_line(exchange(b, "How much is the Plus plan?")) == ["token", "token", "done"]
             # and A can carry on afterwards
             assert exchange(a, "hello again")[-1]["type"] == "done"

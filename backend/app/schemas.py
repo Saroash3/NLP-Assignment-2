@@ -46,6 +46,10 @@ class TokenEvent(BaseModel):
 class DoneEvent(BaseModel):
     type: ServerMessageType = ServerMessageType.DONE
     stage: str
+    # Assignment 2 (citations bonus), OPTIONAL and backward-compatible: the source files the
+    # answer was grounded in (deduplicated, best match first). Omitted entirely -- not sent as
+    # null or [] -- when the answer wasn't grounded, so the event is then exactly Assignment 1's.
+    sources: list[str] | None = None
 
 
 class ErrorEvent(BaseModel):

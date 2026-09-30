@@ -8,7 +8,8 @@ of 80 gym documents and answers from them, citing the source file.
 
 - **Local and CPU-friendly retrieval:** `all-MiniLM-L6-v2` embeddings on the CPU, Chroma on disk. No cloud APIs.
 - **RAG only:** no tools or agents. One retrieval step per message, nothing else.
-- **WebSocket contract unchanged** from Assignment 1 (proved by an automated test, see §7.4).
+- **WebSocket contract unchanged** from Assignment 1 (proved by an automated test, see §7.4). The
+  only addition is one **optional** `sources` field on `done`, for the visible-citations bonus (§5.5).
 - The Assignment 1 README (use case, conversation stages, model selection) is kept in
   [docs/ASSIGNMENT1_README.md](docs/ASSIGNMENT1_README.md).
 
@@ -20,7 +21,7 @@ of 80 gym documents and answers from them, citing the source file.
 2. [Architecture](#2-architecture)
 3. [Document collection](#3-document-collection)
 4. [Indexing pipeline: chunking, embeddings, vector store](#4-indexing-pipeline)
-5. [Retrieval and grounding](#5-retrieval-and-grounding)
+5. [Retrieval, grounding and visible citations (bonus)](#5-retrieval-and-grounding)
 6. [Context budget](#6-context-budget)
 7. [Real-time behaviour: latency, caching, concurrency, streaming](#7-real-time-behaviour)
 8. [Failure handling](#8-failure-handling)
@@ -236,6 +237,7 @@ threshold.
              [Source 2: ...] ...
              Answer from these sources. Tables: read each row on its own ... If they don't
              contain the answer, say our documents don't cover that and suggest WhatsApp.
+             Don't mention file names -- the source line is added for you.
              (or the NO MATCH note / the RETRIEVAL UNAVAILABLE note, see §8)
 [system]     scope reminder (Assignment 1 "sandwich")
 [user]       latest message
@@ -245,8 +247,12 @@ threshold.
   ungrounded ones, and the system prompt shrank from about 2,300 to 1,559 tokens.
 - The sources go **after** the history, so the system prompt + history stay identical from turn
   to turn and Ollama can reuse their cached computation.
-- Grounding rules: every gym fact must come from SOURCES; mention the source file where it helps;
-  never use facts about other gyms.
+- Grounding rules: every gym fact must come from SOURCES; never use facts about other gyms.
+- **Referring back to the source:** every grounded answer ends with a short line such as
+  `Sources: plan_plus.md, plan_comparison.md`. The **server** appends it as one final ordinary
+  `token` event, because the 3B model put it at the start, the end, or nowhere when asked to
+  write it itself. The line is kept out of the conversation history, so the model doesn't start
+  copying it.
 
 ### 5.4 How retrieval fits with the Assignment 1 off-topic classifier
 The classifier and retrieval run **in parallel**, so retrieval adds about 0 ms. The classifier
@@ -255,6 +261,30 @@ alone wrongly rejected real gym questions such as *"What are the timings at the 
 classifier says OFF_TOPIC but the best chunk scores **≥ 0.45**, the question is answered from
 the sources. Every clear off-topic message scored ≤ 0.32, so there is a 0.13 margin. The
 off-topic battery improved while the off-topic catch rate stayed at 100% (§9.2).
+
+### 5.5 Visible citations in the chat UI (bonus)
+When an answer was grounded, the chat shows the source documents as small chips under the
+message:
+
+![Citation chips in the chat](docs/citations_screenshot.png)
+
+- **Wire format (backward-compatible):** one optional field on the existing `done` event, and
+  nothing else changes:
+  ```json
+  { "type": "done", "stage": "information_gathering", "sources": ["plan_plus.md", "plan_comparison.md"] }
+  ```
+  The list holds the files of the chunks that were **actually in the prompt** after the token
+  budget, deduplicated, best match first. When the answer was not grounded (no match, retrieval
+  unavailable, off-topic redirect, or the reply itself says "our documents don't cover that"),
+  the field is **omitted entirely**, so `done` is byte-for-byte Assignment 1's. An old frontend
+  simply ignores the field.
+- **Frontend:** `useChatSocket` attaches `sources` to the reply that just finished streaming;
+  `MessageBubble` renders the chips (violet accent, fade-in) only when the list exists.
+- **Tested:** `test_streaming_contract.py` checks the field's presence and values for grounded and
+  override answers, its absence for no-match, retrieval failure and off-topic, deduplication, and
+  the "don't cover" rule. It was also checked in a real browser with Playwright: 23 token frames
+  gave 23 DOM updates (streaming unchanged), chips appeared for grounded answers and not for BJJ,
+  and there were no page errors.
 
 ---
 
@@ -352,7 +382,7 @@ single-user speed is unchanged. It's set on the test machine (§1.5).
 - every event has **exactly** Assignment 1's fields (`schemas.py` is unchanged);
 - there is **one `token` event per chunk the model yields, in order**.
 
-A real run:
+A real run (before the citations bonus was added):
 ```
 0.000s <- {"type":"session","session_id":"94fb…","stage":"greeting"}
 0.000s -> {"type": "message", "content": "Is there a sauna at the Bahria branch?"}
@@ -361,6 +391,8 @@ A real run:
    … 25 token events, ~8 ms apart …
 1.367s <- {"type":"done","stage":"information_gathering"}
 ```
+With citations, a grounded answer ends with one extra `token` (`"\n\nSources: …"`) and `done`
+carries the optional `sources` list (§5.5).
 
 ---
 
@@ -374,7 +406,10 @@ Retrieval works, but no chunk scores ≥ 0.35. The model gets the **NO MATCH** n
 documents don't cover that, suggest the front desk on WhatsApp, never guess a Zor fact; answer
 greetings, small talk and general fitness normally."* Real reply to *"Do you have a CrossFit box
 with a rig?"* (top score 0.309): **"Our documents don't cover that. You can check with the
-front desk on WhatsApp (0333-5550967)."** (3/3 runs).
+front desk on WhatsApp (0333-5550967)."** (3/3 runs, with `OLLAMA_NUM_PARALLEL=1`; since switching
+to 4 parallel slots the classifier redirects this question as off-topic instead, which is also
+acceptable). No citations are sent. Counter-example: see limitation 12 (a "yes" guessed for an
+equipment question).
 
 ### 8.2 Embedding or vector store failure, or timeout
 Tested cases:
@@ -439,15 +474,15 @@ expected source is in the top-4 for every answerable question.
 | Ambiguous | 5/10 | 7/10 |
 | Overall | 24/30 (80%) | 27/30 (90%) |
 
-### 9.3 End-to-end examples (real replies over the WebSocket)
-| Question | Retrieved (top) | Nova |
+### 9.3 End-to-end examples (real replies over the WebSocket, final version)
+| Question | Nova | Citation chips (`done.sources`) |
 |---|---|---|
-| How much is the Plus membership per month? | plan_plus.md ×3 | "The Plus membership plan costs PKR 16,000 per month at Zor Fitness Club. (source: plan_plus.md)" |
-| What are the timings at the Bahria branch? *(classifier said OFF_TOPIC; override at 0.642)* | branch_bahria_rawalpindi.md | "…from 6:00 AM to midnight on weekdays, and from 10:00 AM to 8:00 PM on Sundays." |
-| → "and for ladies?" *(follow-up)* | branch_bahria, faq_ladies | "…8:00 AM to 9:00 PM on weekdays, and closed on Sundays." |
-| Do you have a CrossFit box with a rig? *(no match)* | none ≥ 0.35 | "Our documents don't cover that. You can check with the front desk on WhatsApp (0333-5550967)." |
-| Do you offer Brazilian jiu-jitsu or MMA classes? | faq_classes (0.520) | "Our sources don't cover that…" |
-| Can I bring a guest to G-11 on a weekday evening? | policy_guest.md (0.769) | "…no guests are allowed from 6:00–9:00pm on weekdays." |
+| How much is the Plus membership per month? | "The Plus membership plan costs PKR 16,000 per month at Zor Fitness Club.<br>Sources: plan_plus.md, plan_comparison.md" | plan_plus.md, plan_comparison.md |
+| What are the timings at the Bahria branch? *(classifier said OFF_TOPIC; override at 0.642)* | "…6:00 AM to midnight on weekdays, and from 10:00 AM to 8:00 PM on Sundays… only the Ladies Wing is closed." | branch_bahria_rawalpindi.md, hours_all_branches.md |
+| → "and for ladies?" *(follow-up)* | "…the Ladies Wing is open from 8:00 AM to 9:00 PM on weekdays, and it is closed on Sundays." | branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md |
+| Do you offer Brazilian jiu-jitsu or MMA classes? | "Our documents don't cover that. Please ask the front desk on WhatsApp…" | *(none)* |
+| Can I bring a guest to G-11 on a weekday evening? | "No guests are allowed at G-11 on weekdays from 6:00 to 9:00 pm." | policy_guest.md, classes_functional_zor_circuit.md |
+| Do you have a CrossFit box with a rig? | *(off-topic redirect from the classifier)* | *(none)* |
 
 Reproduce with `backend/.venv/Scripts/python.exe eval/e2e_examples.py` while the backend is running.
 
@@ -455,7 +490,7 @@ Reproduce with `backend/.venv/Scripts/python.exe eval/e2e_examples.py` while the
 
 ## 10. API reference
 
-Unchanged from Assignment 1.
+Unchanged from Assignment 1, except for **one optional field** on `done` (citations bonus).
 
 **REST:** `GET /health` → `{status, model, ollama_reachable, active_sessions}` ·
 `POST /session/new` → `{session_id, stage}`
@@ -469,15 +504,22 @@ Unchanged from Assignment 1.
 { "type": "session", "session_id": "...", "stage": "greeting" }
 { "type": "token", "content": "Hi" }
 { "type": "done", "stage": "information_gathering" }
+{ "type": "done", "stage": "information_gathering", "sources": ["plan_plus.md", "plan_comparison.md"] }
 { "type": "error", "message": "...", "code": "bad_request" | "busy" | "llm_error" | "internal_error" }
 ```
+- **`sources` (optional, new in Assignment 2):** the source documents the answer was grounded in,
+  deduplicated, best match first. It is present **only** when the answer was grounded and is
+  omitted otherwise (not `null`, not `[]`). Clients that don't know it can ignore it.
+- A grounded answer's last `token` is a short `"\n\nSource(s): …"` line added by the server.
+- A message over 2,000 characters gets `error` with code `bad_request` and the text *"That message is
+  too long (the limit is 2,000 characters)…"*.
 
 ---
 
 ## 11. Testing
 
 ```bash
-cd backend && python -m pytest -q        # 68 tests, about 1 minute, no Ollama needed
+cd backend && python -m pytest -q        # 71 tests, about 1 minute, no Ollama needed
 ```
 | File | What it covers |
 |---|---|
@@ -485,7 +527,7 @@ cd backend && python -m pytest -q        # 68 tests, about 1 minute, no Ollama n
 | `test_rag_index.py` | chunking rules, heading prefix, incremental add, update and delete |
 | `test_rag_prompt.py` | follow-up rule, threshold, source labels, budget (lowest chunk dropped first, oldest history trimmed) |
 | `test_rag_cache.py` | cache hits, re-index invalidation, cached results returned as copies |
-| `test_streaming_contract.py` | WebSocket events identical to Assignment 1 in all RAG paths |
+| `test_streaming_contract.py` | WebSocket events identical to Assignment 1 in all RAG paths; the optional `sources` field only when grounded |
 | `test_failures.py` | all Phase IV failure cases (§8) |
 
 Evaluation scripts (need Ollama running; the WebSocket ones also need the backend):
@@ -519,7 +561,10 @@ Evaluation scripts (need Ollama running; the WebSocket ones also need the backen
    too low for the override). When retrieval is down, the override can't help at all.
 5. **English embedding model:** Urdu script works only by a thin margin (0.416 vs 0.35). The model
    also once slipped a Cyrillic letter into an Urdu reply.
-6. **The model often opens with "(source: file.md)"** instead of mentioning it naturally at the end.
+6. **Citations are per retrieved file, not per sentence.** The chips and the "Sources:" line list
+   every file whose chunks were in the prompt, e.g. `classes_functional_zor_circuit.md` next to
+   `policy_guest.md` for the guest question, even if the answer used only one of them. (The
+   model placing "(source: …)" randomly was fixed by having the server add the line.)
 7. **Truncated embeddings:** 10% of chunks (whole tables or rule lists) are longer than MiniLM's
    256 tokens, so their ends are invisible to retrieval. The LLM still sees the full chunk.
 8. **Ollama concurrency:** calls are queued unless `OLLAMA_NUM_PARALLEL` > 1. Even then, each
@@ -529,6 +574,13 @@ Evaluation scripts (need Ollama running; the WebSocket ones also need the backen
 10. **Sessions and the cache live in memory:** a server restart forgets conversations.
 11. **Fictional data:** prices and rules are realistic for Pakistan in 2026 but invented. Contact
     numbers are fictional.
+12. **The no-match path can still produce a guessed "yes".** *"Is there a treadmill with an
+    incline?"* scored 0.33 (below the threshold), and the model replied *"Sure, we have treadmills
+    with incline settings"* despite the no-match note. That's plausible, but it's not in the
+    documents. Questions about common gym equipment are most at risk.
+13. **The classifier's verdicts shift slightly with `OLLAMA_NUM_PARALLEL`.** With 4 parallel slots,
+    *"Do you have a CrossFit box with a rig?"* is redirected as off-topic, where it passed before.
+    That's the classifier being non-deterministic under parallel batching, not a retrieval issue.
 
 ---
 
@@ -546,7 +598,7 @@ backend/
     retriever.py           retrieve(query) + LRU caches
     benchmark.py           latency benchmark (python -m rag.benchmark)
     chroma_db/             the vector index (git-ignored; rebuilt by rag.index)
-  tests/                   68 tests
+  tests/                   71 tests
 eval/                      test questions, threshold scores, e2e examples, concurrency test, consistency check
 evaluation/                Assignment 1 off-topic battery (+ results.md with before/after runs)
 frontend/                  React + Vite UI

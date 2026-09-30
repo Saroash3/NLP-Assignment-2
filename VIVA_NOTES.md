@@ -59,7 +59,11 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 | **Drop the lowest-ranked chunk first, then the oldest history** | The best evidence and the newest context matter most. |
 | **User message cap 1,000 tokens** (keep the beginning + a marker) | Urdu script uses many more tokens per character; the question is usually at the start. |
 | Sources placed **after** the history | The system prompt + history stay identical between turns, so Ollama reuses its cache. |
-| Source labels `[Source 1: plan_plus.md]` | The model can mention the file name, and citations can be shown in the UI. |
+| Source labels `[Source 1: plan_plus.md]` | The model knows which text came from which file. |
+| **Server adds the "Source:" line** at the end (one final token) instead of the model | When the 3B model wrote it, it came at the start, the end, or not at all. Server-side, it is always at the end and always matches the chips. |
+| The source line is **not stored in history** | Otherwise the model copies "Sources: …" into its next answer and the line appears twice (seen in testing). |
+| Citations = optional `sources` field on `done` | Backward-compatible: old clients ignore it, and the field is absent (not null) when not grounded, so `done` is exactly Assignment 1's. Chips appear when the answer finishes. |
+| No chips if the reply says "our documents don't cover that" | For BJJ, the chunks were related but didn't answer; chips would falsely claim grounding. |
 
 ### Real-time
 | Decision | Why |
@@ -92,8 +96,8 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 >   message. Never invent or guess a Zor fact, and never use facts about other gyms.
 > - If the sources don't contain the answer, say plainly that our documents don't cover that
 >   and suggest the front desk on WhatsApp -- don't fill the gap with a guess.
-> - When you use a source, mention its file name naturally where it helps, e.g.
->   "(source: policy_freeze.md)". Use at most two source mentions per reply.
+> - Do NOT write file names or "Source:" lines yourself -- the system adds the source line
+>   after your answer automatically.
 
 **Sources message** (per turn):
 > SOURCES -- excerpts from Zor Fitness Club's documents that best match the member's latest
@@ -105,7 +109,7 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 > Answer the member's latest message from these sources. Tables: read each row on its own -- a
 > value in one row (e.g. 'Closed') applies ONLY to that row's area or plan. If the sources don't
 > contain the answer, say our documents don't cover that and suggest the front desk on WhatsApp
-> (0333-5550967). Mention the source file name where it helps, e.g. (source: plan_plus.md).
+> (0333-5550967). Don't mention file names -- the source line is added for you.
 
 **No match note:**
 > SOURCES: none -- no Zor Fitness Club document matched the member's latest message. This message
@@ -210,8 +214,14 @@ with a missing folder, a corrupted folder, an embedding error, a timeout and an 
 timestamp) is part of the cache key; the test changes a price, re-indexes, and gets the new price.
 
 **How do you know streaming didn't change?** An automated test compares every event's fields
-with Assignment 1's schemas and checks one token event per model chunk, for the grounded,
-no-match and override paths.
+with Assignment 1's schemas (the only allowed addition is the optional `sources` on `done`) and
+checks one token event per model chunk, for the grounded, no-match, override, failure and
+off-topic paths. In a real browser, 23 token frames gave 23 updates of the answer text.
+
+**How do the citations work?** The server knows which chunks it put in the prompt. After the
+reply streams, it sends one final token "Sources: a.md, b.md" and adds `"sources": [...]` to
+`done`; the React hook attaches that list to the message, and `MessageBubble` draws the chips.
+There are no chips for no-match, failure, off-topic, or "documents don't cover that".
 
 **Why is the Chroma folder not in git?** It's generated and machine-specific. `python -m rag.index`
 rebuilds it from `documents/` in about 25 seconds.
@@ -227,7 +237,7 @@ listed honestly in the README's Known Limitations.
 ```bash
 cd backend
 python -m rag.index --samples 3                          # build the index + show stats and 3 chunks
-python -m pytest -q                                      # 68 tests
+python -m pytest -q                                      # 71 tests
 python -m rag.benchmark                                  # latency tables
 uvicorn app.main:app --port 8000                         # run the backend
 ../backend/.venv/Scripts/python.exe ../eval/e2e_examples.py      # 5 real conversations (backend running)

@@ -311,6 +311,31 @@ class ConversationManager:
     def build_prompt_messages(
         self, session: Session, user_text: str, chunks: list[dict] | None = ()
     ) -> list[dict[str, str]]:
+        """The prompt only (see build_prompt, which also returns the sources used)."""
+        return self.build_prompt(session, user_text, chunks)[0]
+
+    @staticmethod
+    def citations_for(sources: list[str], reply: str) -> list[str] | None:
+        """
+        Citations for the `done` event (bonus): the deduplicated source files that were in
+        the prompt -- or None (no citations) if there were none, or if the reply itself says
+        the documents don't cover the question (the phrase our prompts tell the model to use),
+        e.g. "Do you offer MMA?", where the retrieved chunks were only related, not answers.
+        """
+        if not sources or re.search(r"(documents|sources) don.t cover", reply, re.IGNORECASE):
+            return None
+        return sources
+
+    @staticmethod
+    def source_line(sources: list[str]) -> str:
+        """The short line appended (as one final token) to every grounded answer. Added by
+        the server, not the model, because the 3B model put it at the start, the end, or
+        nowhere; this way it is ALWAYS at the end and always matches the citation chips."""
+        return f"\n\n{'Source' if len(sources) == 1 else 'Sources'}: {', '.join(sources)}"
+
+    def build_prompt(
+        self, session: Session, user_text: str, chunks: list[dict] | None = ()
+    ) -> tuple[list[dict[str, str]], list[str]]:
         """
         Assemble the exact message list to send to the LLM:
           [system prompt] + [history, oldest trimmed to fit] + [SOURCES or no-match note]
@@ -335,6 +360,7 @@ class ConversationManager:
 
         # Step 1: sources. Drop the lowest-ranked chunks until they fit their own budget
         # (and whatever space is really left, in case the user message was huge).
+        kept: list[dict] = []
         if chunks is None:  # retrieval failed: send the "unavailable" note, not "no match"
             context = build_context_message(None)
         else:
@@ -358,7 +384,9 @@ class ConversationManager:
         # final user turn -- the last instruction the small model sees before generating.
         messages.append({"role": "system", "content": SCOPE_REMINDER})
         messages.append({"role": "user", "content": user_text})
-        return messages
+        # Source files actually in the prompt (after the budget), deduplicated, best first.
+        sources = list(dict.fromkeys(c["source"] for c in kept))
+        return messages, sources
 
     def record_turn(self, session: Session, user_text: str, assistant_text: str) -> None:
         """Append a completed exchange to history and update the stage guess."""
