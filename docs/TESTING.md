@@ -35,7 +35,8 @@ Prerequisites: `ollama serve` running with `qwen2.5:3b` pulled, backend running
 
 ### Correctness & in-character behavior
 - [ ] Ask about class schedule, membership prices, and a trainer by name — answers match
-      `knowledge_base.py` exactly (no invented prices/classes).
+      `facts_source_of_truth.md` / the retrieved documents exactly (no invented prices/classes).
+      (Assignment 2: the RAG tests are listed in the root README §11.)
 - [ ] Walk through booking a class end-to-end (greeting → ask about a class → book it →
       assistant confirms details before finalizing).
 - [ ] Ask to freeze a membership — assistant states the correct fee/duration from policy.
