@@ -1,20 +1,22 @@
 :root {
-  --bg: #0a0a12;
-  --bg-elevated: #12121e;
-  --bg-card: #171725;
-  --border: #26263a;
-  --text: #f1f0f8;
-  --text-muted: #9997ab;
-  --accent: #7c5cff;
-  --accent-soft: rgba(124, 92, 255, 0.16);
-  --accent-2: #22d3ee;
+  /* "Volt on Graphite" palette (landing redesign). Shared by the chat screen. */
+  --bg: #0b0c0f;
+  --bg-elevated: #13151a;
+  --bg-card: #1b1e25;
+  --border: #262a33;
+  --text: #f3f4f1;
+  --text-muted: #9aa0a6;
+  --accent: #c8ff3d;
+  --accent-soft: rgba(200, 255, 61, 0.12);
+  --accent-ink: #0b0c0f; /* text on top of the volt accent */
+  --accent-2: #10b981;
   --error: #ff6b6b;
   --error-soft: rgba(255, 107, 107, 0.14);
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
-  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Anton", "Inter Variable", system-ui, sans-serif;
+  --font-body: "Inter Variable", system-ui, sans-serif;
 }
 
 * {
@@ -44,236 +46,9 @@ button {
   height: 100%;
 }
 
-/* ---------- Landing ---------- */
 
-.landing {
-  min-height: 100%;
-  overflow-x: hidden;
-}
 
-.hero {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 32px;
-  overflow: hidden;
-  background: radial-gradient(circle at 50% 20%, #171233 0%, var(--bg) 65%);
-}
-
-.hero__canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.hero__content {
-  position: relative;
-  z-index: 1;
-  max-width: 640px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  pointer-events: none;
-}
-
-.hero__content > * {
-  pointer-events: auto;
-}
-
-.hero__eyebrow {
-  letter-spacing: 0.2em;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-2);
-}
-
-.hero h1 {
-  font-family: var(--font-display);
-  font-size: clamp(2.2rem, 5vw, 3.4rem);
-  line-height: 1.15;
-  margin: 0;
-  background: linear-gradient(135deg, #ffffff 30%, #b9aaff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hero p {
-  color: var(--text-muted);
-  font-size: 1.05rem;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 520px;
-}
-
-.cta-button {
-  margin-top: 8px;
-  padding: 14px 32px;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(135deg, var(--accent), #5b3df0);
-  color: white;
-  font-weight: 600;
-  font-size: 1rem;
-  box-shadow: 0 8px 30px rgba(124, 92, 255, 0.45);
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 24px;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 48px 32px 80px;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat__value {
-  font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.stat__label {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  margin-top: 4px;
-}
-
-.trainers {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 40px 32px 70px;
-}
-
-.section-eyebrow {
-  display: block;
-  text-align: center;
-  letter-spacing: 0.2em;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-2);
-  margin-bottom: 10px;
-}
-
-.trainers h2,
-.facilities h2 {
-  font-family: var(--font-display);
-  text-align: center;
-  font-size: 1.8rem;
-  margin: 0 0 10px;
-}
-
-.section-subtitle {
-  text-align: center;
-  color: var(--text-muted);
-  max-width: 480px;
-  margin: 0 auto 32px;
-  font-size: 0.95rem;
-}
-
-.trainer-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.trainer-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 28px 20px;
-  text-align: center;
-  opacity: 0; /* GSAP fades these in via .trainer-card selector */
-  cursor: default;
-}
-
-.trainer-card__avatar {
-  width: 84px;
-  height: 84px;
-  margin: 0 auto 16px;
-  border-radius: 50%;
-  display: block;
-  object-fit: cover;
-  border: 2px solid var(--border);
-  background: var(--bg-elevated);
-}
-
-.trainer-card__name {
-  font-weight: 600;
-}
-
-.trainer-card__specialty {
-  color: var(--accent-2);
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
-.trainer-card__bio {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
-  margin: 12px 0 0;
-}
-
-/* ---------- Facilities ---------- */
-
-.facilities {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 10px 32px 100px;
-}
-
-.facility-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-}
-
-.facility-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 22px 20px;
-  opacity: 0; /* GSAP fades these in via .facility-card selector */
-  transition: border-color 0.2s ease;
-}
-
-.facility-card__icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  background: var(--accent-soft);
-  color: var(--accent-2);
-  margin-bottom: 14px;
-}
-
-.facility-card__name {
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.facility-card__description {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* ---------- Chat ---------- */
-
+/* ---------------- Chat screen ---------------- */
 .chat-shell {
   height: 100vh;
   display: flex;
@@ -298,7 +73,9 @@ button {
 
 .chat-header__name {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 400;
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
 }
 
 .chat-header__sub {
@@ -327,7 +104,7 @@ button {
 }
 
 .stage-badge {
-  background: var(--accent-soft);
+  background: rgba(16, 185, 129, 0.14);
   color: var(--accent-2);
   border-radius: 999px;
   padding: 6px 14px;
@@ -452,9 +229,9 @@ button {
   padding: 3px 9px;
   border-radius: 999px;
   font-size: 0.72rem;
-  color: #cfc4ff;
+  color: #e4ffa8;
   background: var(--accent-soft);
-  border: 1px solid rgba(124, 92, 255, 0.35);
+  border: 1px solid rgba(200, 255, 61, 0.35);
 }
 
 .bubble {
@@ -468,8 +245,9 @@ button {
 }
 
 .bubble--user {
-  background: linear-gradient(135deg, var(--accent), #5b3df0);
-  color: white;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 500;
   border-bottom-right-radius: 4px;
 }
 
@@ -549,8 +327,8 @@ button {
 }
 
 .send-button {
-  background: linear-gradient(135deg, var(--accent), #5b3df0);
-  color: white;
+  background: var(--accent);
+  color: var(--accent-ink);
   border: none;
   border-radius: 999px;
   padding: 0 26px;

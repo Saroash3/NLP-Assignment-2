@@ -1,0 +1,67 @@
+/*
+ * Tailwind v4 entry for the landing page. Tailwind's base styles live in a CSS layer, so the
+ * chat screen's plain rules in global.css (unlayered) always win over them -- the chat keeps
+ * its own look.
+ */
+@import "tailwindcss";
+
+@theme {
+  /* Fonts (self-hosted via @fontsource, imported in main.tsx) */
+  --font-display: "Anton", "Inter Variable", system-ui, sans-serif;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+
+  /* "Volt on Graphite" palette */
+  --color-graphite: #0b0c0f;
+  --color-surface: #13151a;
+  --color-surface-2: #1b1e25;
+  --color-line: #262a33;
+  --color-ink: #f3f4f1;
+  --color-mute: #9aa0a6;
+  --color-volt: #c8ff3d;
+  --color-emerald: #10b981;
+
+  /* Names used by the shadcn/ui components */
+  --color-background: #0b0c0f;
+  --color-foreground: #f3f4f1;
+  --color-card: #13151a;
+  --color-card-foreground: #f3f4f1;
+  --color-primary: #c8ff3d;
+  --color-primary-foreground: #0b0c0f;
+  --color-secondary: #1b1e25;
+  --color-secondary-foreground: #f3f4f1;
+  --color-muted: #1b1e25;
+  --color-muted-foreground: #9aa0a6;
+  --color-border: #262a33;
+  --color-ring: #c8ff3d;
+
+  --animate-accordion-down: accordion-down 0.25s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: auto; /* Lenis handles smooth scrolling */
+  }
+  ::selection {
+    background: var(--color-volt);
+    color: var(--color-graphite);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
