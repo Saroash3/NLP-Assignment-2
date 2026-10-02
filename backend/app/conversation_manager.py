@@ -84,10 +84,21 @@ CLASSIFIER_TEMPERATURE = 0.0
 # --- RAG settings (see the module docstring for the full budget) ---
 CHUNK_TOKEN_BUDGET = 1200  # max tokens for the SOURCES message (4 chunks usually cost 930-1180)
 PER_MESSAGE_OVERHEAD = 5  # chat-template tokens Qwen adds around each message
-# Follow-ups like "and for ladies?" mean nothing on their own, so a message this short is
-# embedded together with the previous user message. Longer messages are embedded alone, so
-# a real topic switch isn't dragged back to the old topic (tested in README section 6).
+# FOLLOW-UP RULE. "and for ladies?" means nothing on its own, so it is embedded together with
+# the previous user message. But most short messages are complete questions ("What is the
+# guest fee?", "Is there a pool at F-7?"); gluing them to an unrelated previous question
+# retrieved the WRONG documents (measured: 50% failures when merged vs 12% alone). So a short
+# message is merged only if it LOOKS like a follow-up: it starts with a connector, or refers
+# back with a pronoun -- or, as a fallback, it finds nothing above the threshold on its own.
 FOLLOW_UP_MAX_WORDS = 6
+FOLLOW_UP_STARTERS = ("and ", "or ", "also ", "what about", "how about", "for ", "but ", "so ",
+                      "then ", "aur ", "or what", "same ")
+FOLLOW_UP_PRONOUNS = re.compile(r"\b(it|its|that|this|these|those|they|them|he|she|him|one|ones|wahan|uska|uski)\b",
+                                re.IGNORECASE)
+# Replies that refused or redirected. They carry no facts, and keeping them in the model's
+# history made it repeat the refusal for later, answerable questions (measured), so such
+# exchanges are not kept in the history (see record_turn).
+REFUSAL_REPLY = re.compile(r"(documents|sources) don.?t cover|can.?t look that up", re.IGNORECASE)
 # Longest user message kept in the prompt (see truncate_user_message). With it, the fixed
 # parts are at most 500 + ~1559 + ~92 + 1000 tokens, which still leaves ~900 for sources.
 MAX_USER_TOKENS = 1000
@@ -229,10 +240,22 @@ class ConversationManager:
 
     # --- RAG: retrieval ---
 
+    @staticmethod
+    def looks_like_follow_up(user_text: str) -> bool:
+        """Short AND (starts with a connector OR refers back with a pronoun)."""
+        text = user_text.strip().lower()
+        if len(text.split()) > FOLLOW_UP_MAX_WORDS:
+            return False
+        return text.startswith(FOLLOW_UP_STARTERS) or bool(FOLLOW_UP_PRONOUNS.search(text))
+
+    def previous_user_message(self, session: Session) -> str | None:
+        return next((m.content for m in reversed(session.history) if m.role == "user"), None)
+
     def retrieval_query(self, session: Session, user_text: str) -> str:
-        """The text to embed: short follow-ups get the previous user message prepended."""
-        previous = next((m.content for m in reversed(session.history) if m.role == "user"), None)
-        if previous and len(user_text.split()) <= FOLLOW_UP_MAX_WORDS:
+        """The text to embed: a follow-up gets the previous user message prepended;
+        everything else (including short complete questions) is embedded alone."""
+        previous = self.previous_user_message(session)
+        if previous and self.looks_like_follow_up(user_text):
             return f"{previous} {user_text}"
         return user_text
 
@@ -250,19 +273,29 @@ class ConversationManager:
                        never crashes or hangs because of retrieval.
         """
         settings = get_settings()
-        query = self.retrieval_query(session, user_text)
-        start = time.perf_counter()
-        try:
+
+        async def search(query: str) -> list[dict]:
+            start = time.perf_counter()
             chunks = await asyncio.wait_for(
                 asyncio.to_thread(retriever.retrieve, query), timeout=settings.retrieval_timeout_s
             )
+            logger.info("Retrieval %.0f ms, query=%r -> %s", (time.perf_counter() - start) * 1000,
+                        query, [(c["source"], c["score"]) for c in chunks])
+            return [c for c in chunks if c["score"] >= settings.similarity_threshold]
+
+        query = self.retrieval_query(session, user_text)
+        previous = self.previous_user_message(session)
+        try:
+            relevant = await search(query)
+            # Fallback: a short fragment without a marker word ("ladies?") that finds nothing
+            # on its own is tried once more together with the previous user message.
+            if (not relevant and query == user_text and previous
+                    and len(user_text.split()) <= FOLLOW_UP_MAX_WORDS):
+                relevant = await search(f"{previous} {user_text}")
         except Exception as e:  # includes TimeoutError from wait_for
             logger.warning("Retrieval unavailable (%s: %s); replying without documents",
                            type(e).__name__, e)
             return None
-        relevant = [c for c in chunks if c["score"] >= settings.similarity_threshold]
-        logger.info("Retrieval %.0f ms, query=%r -> %s", (time.perf_counter() - start) * 1000,
-                    query, [(c["source"], c["score"]) for c in chunks])
         return relevant
 
     def apply_retrieval_override(self, redirect: str | None, chunks: list[dict]) -> str | None:
@@ -388,11 +421,24 @@ class ConversationManager:
         sources = list(dict.fromkeys(c["source"] for c in kept))
         return messages, sources
 
-    def record_turn(self, session: Session, user_text: str, assistant_text: str) -> None:
-        """Append a completed exchange to history and update the stage guess."""
+    @staticmethod
+    def is_refusal(reply: str) -> bool:
+        """True for "our documents don't cover that" / "can't look that up" replies."""
+        return bool(REFUSAL_REPLY.search(reply))
+
+    def record_turn(
+        self, session: Session, user_text: str, assistant_text: str, remember: bool = True
+    ) -> None:
+        """
+        Update the stage guess and append the exchange to history. remember=False (used for
+        refusals and off-topic redirects) skips the history: those exchanges carry no facts,
+        and keeping them made the small model repeat the refusal for later, answerable
+        questions (measured: e.g. a guest-rule question went from answered to refused 3/3).
+        """
         session.stage = _guess_stage(session.stage, user_text)
-        session.history.append(Message(role="user", content=user_text))
-        session.history.append(Message(role="assistant", content=assistant_text))
+        if remember:
+            session.history.append(Message(role="user", content=user_text))
+            session.history.append(Message(role="assistant", content=assistant_text))
         session.last_active = time.time()
 
     def session_count(self) -> int:

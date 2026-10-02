@@ -46,7 +46,10 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 | **top-k = 4** | The assignment says at least 3. 4 chunks is about 1,000 tokens, which fits the budget. |
 | **Threshold 0.35** | From real scores: off-topic ≤ 0.17, small talk ≤ 0.30, weakest real question 0.375. 0.35 separates them. |
 | Gym-related but uncovered questions (BJJ) are **handled by the prompt, not the threshold** | BJJ scored 0.520, the same as real questions, so no threshold can separate them. The prompt says "if the sources don't answer it, say so." |
-| **Follow-up rule:** if the message has ≤ 6 words, add the previous user message | "and for ladies?" alone means nothing (score ~0.36). Longer messages are left alone so a topic switch isn't dragged back. Tested: 6/6. |
+| **Follow-up rule:** add the previous user message only if the message is short **and** starts with a connector ("and", "what about", "aur"…) or refers back with a pronoun ("it", "that"…); fall back to the merged query only if the message alone finds nothing | "and for ladies?" alone means nothing (score ~0.36). But short *complete* questions ("What is the guest fee?") must be embedded alone. The first version merged every message of 6 words or fewer, and in live sessions that pulled in the wrong documents (50% failures when merged). |
+| **Refused or redirected exchanges are not kept in history** | They contain no facts, and the 3B model copied them: with 2 refusals in the history, an answerable question went from answered to refused 3/3. |
+| **"No + reason" instead of "don't cover"** | When a source rule excludes the case (student discount on Elite, a guest after a trial), the right answer is "No -- <rule>". "Our documents don't cover that" is only for questions the documents truly lack. |
+| **The 4 plan names in the gym identity** | It stops the model inventing prices for plans that don't exist ("Platinum"). |
 | Retrieval **in parallel** with the classifier | The classifier takes ~350 ms anyway; retrieval (10 ms) finishes inside that time, so it adds 0 ms. |
 | **Override:** a strong document match (≥ 0.45) beats an OFF_TOPIC verdict | The classifier rejected "timings at the Bahria branch?". Off-topic messages never scored above 0.32, so 0.45 is safe. The off-topic catch rate stayed 10/10. |
 
@@ -88,14 +91,18 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 
 **Gym identity** (the only gym facts left in the system prompt):
 > ABOUT ZOR FITNESS CLUB: a gym in Pakistan with three branches -- F-7 Islamabad, G-11 Islamabad
-> and Bahria Town Phase 7 Rawalpindi. Front desk WhatsApp: 0333-5550967.
+> and Bahria Town Phase 7 Rawalpindi. Membership plans: Standard, Plus, Elite and Ladies Only --
+> there are no other plans. Front desk WhatsApp: 0333-5550967.
 
 **Grounding rules** (part of the system prompt, `_BEHAVIOR_RULES`):
 > - GROUNDING: every gym fact you state (prices, fees, hours, class times, trainer names,
 >   policies, rules) must come from the SOURCES message you receive before the member's latest
 >   message. Never invent or guess a Zor fact, and never use facts about other gyms.
-> - If the sources don't contain the answer, say plainly that our documents don't cover that
->   and suggest the front desk on WhatsApp -- don't fill the gap with a guess.
+> - ANSWER whenever the sources contain the answer or a rule that settles it. If a rule in the
+>   sources excludes the member's case, answer "No" and give the reason from the sources. If they
+>   ask about something we don't have (e.g. a plan or class not in the sources), say we don't have
+>   it and name what we do have. Only when the sources are about something else entirely, say our
+>   documents don't cover that and suggest the front desk on WhatsApp -- never guess.
 > - Do NOT write file names or "Source:" lines yourself -- the system adds the source line
 >   after your answer automatically.
 
@@ -106,10 +113,13 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 > [Source 1: plan_plus.md]
 > *chunk text…*
 >
-> Answer the member's latest message from these sources. Tables: read each row on its own -- a
-> value in one row (e.g. 'Closed') applies ONLY to that row's area or plan. If the sources don't
-> contain the answer, say our documents don't cover that and suggest the front desk on WhatsApp
-> (0333-5550967). Don't mention file names -- the source line is added for you.
+> Answer the member's latest message directly from these sources, with the specific facts
+> (prices, times, names, rules). Tables: read each row on its own -- a value in one row (e.g.
+> 'Closed') applies ONLY to that row's area or plan. If a rule in the sources rules their case out,
+> answer "No" and give that rule as the reason ("No -- <the rule from the sources>"). If they name
+> something not in the sources (e.g. a plan we don't have), say we don't have it and list what we
+> do have. Say our documents don't cover that ONLY if these sources are about something else
+> entirely. Don't mention file names -- the source line is added for you.
 
 **No match note:**
 > SOURCES: none -- no Zor Fitness Club document matched the member's latest message. This message
@@ -226,6 +236,16 @@ There are no chips for no-match, failure, off-topic, or "documents don't cover t
 **Why is the Chroma folder not in git?** It's generated and machine-specific. `python -m rag.index`
 rebuilds it from `documents/` in about 25 seconds.
 
+**What was the live "refusal" bug, and how did you fix it?** In real mixed sessions, simple
+questions were refused. I replayed sessions through the real WebSocket and joined each reply with
+the logged query and retrieved files. That found three causes:
+1. the follow-up rule glued short complete questions to unrelated previous ones (wrong documents);
+2. the prompt let the model say "don't cover" even when the answer was retrieved;
+3. earlier refusals in the history were copied.
+
+Each fix was measured: refusals went from 14.3% to **0%**, and correct answers from 78.1% to **99.0%**
+(105 replies each, README §9.4).
+
 **Biggest weakness?** The 3B model sometimes misreads correct sources (e.g. table rows). We fixed
 the cases we found through the data (linearized tables, clearer sentences), and the rest are
 listed honestly in the README's Known Limitations.
@@ -237,7 +257,7 @@ listed honestly in the README's Known Limitations.
 ```bash
 cd backend
 python -m rag.index --samples 3                          # build the index + show stats and 3 chunks
-python -m pytest -q                                      # 71 tests
+python -m pytest -q                                      # 86 tests
 python -m rag.benchmark                                  # latency tables
 uvicorn app.main:app --port 8000                         # run the backend
 ../backend/.venv/Scripts/python.exe ../eval/e2e_examples.py      # 5 real conversations (backend running)

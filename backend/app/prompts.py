@@ -29,7 +29,8 @@ GYM_NAME = "Zor Fitness Club"
 # The only gym facts kept in the system prompt: who we are and where. Everything else
 # (prices, hours, trainers, policies) must come from retrieved sources.
 _GYM_IDENTITY = f"""ABOUT {GYM_NAME.upper()}: a gym in Pakistan with three branches -- F-7 Islamabad,
-G-11 Islamabad and Bahria Town Phase 7 Rawalpindi. Front desk WhatsApp: 0333-5550967."""
+G-11 Islamabad and Bahria Town Phase 7 Rawalpindi. Membership plans: Standard, Plus, Elite and
+Ladies Only -- there are no other plans. Front desk WhatsApp: 0333-5550967."""
 
 ASSISTANT_NAME = "Nova"
 
@@ -123,8 +124,11 @@ _BEHAVIOR_RULES = """OTHER RULES:
 - GROUNDING: every gym fact you state (prices, fees, hours, class times, trainer names,
   policies, rules) must come from the SOURCES message you receive before the member's latest
   message. Never invent or guess a Zor fact, and never use facts about other gyms.
-- If the sources don't contain the answer, say plainly that our documents don't cover that
-  and suggest the front desk on WhatsApp -- don't fill the gap with a guess.
+- ANSWER whenever the sources contain the answer or a rule that settles it. If a rule in the
+  sources excludes the member's case, answer "No" and give the reason from the sources. If they
+  ask about something we don't have (e.g. a plan or class not in the sources), say we don't have
+  it and name what we do have. Only when the sources are about something else entirely, say our
+  documents don't cover that and suggest the front desk on WhatsApp -- never guess.
 - Do NOT write file names or "Source:" lines yourself -- the system adds the source line
   after your answer automatically.
 - When comparing two plans (or two classes), read each one's own details in the sources and
@@ -175,10 +179,14 @@ _SOURCES_HEADER = (
 ).format(gym=GYM_NAME)
 
 _SOURCES_FOOTER = (
-    "Answer the member's latest message from these sources. Tables: read each row on its own -- "
-    "a value in one row (e.g. 'Closed') applies ONLY to that row's area or plan. If the sources "
-    "don't contain the answer, say our documents don't cover that and suggest the front desk on "
-    "WhatsApp (0333-5550967). Don't mention file names -- the source line is added for you."
+    "Answer the member's latest message directly from these sources, with the specific facts "
+    "(prices, times, names, rules). Tables: read each row on its own -- a value in one row (e.g. "
+    "'Closed') applies ONLY to that row's area or plan. If a rule in the sources rules their case "
+    "out, answer \"No\" and give that rule as the reason (\"No -- <the rule from the sources>\"). "
+    "If they name something not in the "
+    "sources (e.g. a plan we don't have), say we don't have it and list what we do have. Say "
+    "our documents don't cover that ONLY if these sources are about something else entirely. "
+    "Don't mention file names -- the source line is added for you."
 )
 
 # The message already passed the topic check, so this is NOT an off-topic case: the model
@@ -236,8 +244,9 @@ CLASSIFIER_SYSTEM_PROMPT = """You are a strict binary classifier, not a conversa
 
 Decide whether the message below is something a {gym} front-desk assistant should answer.
 
-ON_TOPIC: membership plans/pricing, classes/schedule, trainers, bookings, facilities/amenities,
-gym policies (freezing, cancellation, guest passes, refunds), or general fitness/exercise/
+ON_TOPIC: membership plans/pricing, fees and how to pay them (payment methods like cash, card,
+JazzCash, Easypaisa, instalments, discounts), classes/schedule, trainers, bookings,
+facilities/amenities, gym policies (freezing, cancellation, guest passes, refunds), or general fitness/exercise/
 nutrition questions a gym-goer might ask at the front desk (workout frequency, exercise order,
 stretches, post-workout snacks, which class suits a goal, etc.) -- these count as ON_TOPIC even
 though they're not literally about {gym} itself.
@@ -255,6 +264,7 @@ Examples:
 "Can I freeze my membership?" -> ON_TOPIC
 "Who teaches the Spin Cycle class?" -> ON_TOPIC
 "Do you have a sauna or a pool?" -> ON_TOPIC
+"Do you accept JazzCash?" -> ON_TOPIC
 "Where is the gym located, and what are your hours?" -> ON_TOPIC
 "How many times a week should I work out?" -> ON_TOPIC
 "What's a good stretch to do after leg day?" -> ON_TOPIC

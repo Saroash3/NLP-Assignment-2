@@ -1,0 +1,33 @@
+## before: 105 answerable replies (35 questions x runs)
+- refusal rate on answerable questions: 15/105 = 14.3%
+- correct-answer rate: 82/105 = 78.1%
+- answerable replies with citation chips: 91/105
+- control bjj: 2/3 as expected
+- control lahore: 3/3 as expected
+- control offtopic: 6/6 as expected
+- control smalltalk: 3/3 as expected
+
+Failures:
+- run 1 T3 REFUSED: 'Is the admission fee waived if I pay for 6 months?' -> "Our documents don't cover that. Please contact the front desk on WhatsApp for more information."
+- run 1 N2 REFUSED: 'Can students get a discount?' -> "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer quest"
+- run 1 N8 WRONG: 'Can I freeze my monthly plan?' -> 'Sure thing! For a student on a 3-month or longer plan, you can get a 30-day free freeze during exams. You need to show your official date sh'
+- run 1 N3 WRONG: 'What is the guest fee?' -> 'The guest fee is PKR 500 per visit. Would you like to book a class now?\n\nSources: pricing_prepaid_plans.md, faq_freeze_refund_cancel.md, pol'
+- run 1 N14 REFUSED: 'Do you accept JazzCash?' -> "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer quest"
+- run 1 T15 REFUSED: 'Can I get a refund if I move to Karachi?' -> "Our documents don't cover that -- please contact the front desk on WhatsApp for assistance."
+- run 1 N7 WRONG: 'What is the price of the Platinum plan?' -> 'The Platinum plan is not listed in our current sources. Please contact the front desk on WhatsApp for the latest pricing information.\n\nSourc'
+- run 2 N7 REFUSED: 'What is the price of the Platinum plan?' -> "Our documents don't cover that. Please ask the front desk on WhatsApp for more information."
+- run 2 N10 WRONG: 'Who teaches Zumba?' -> "I don't have specific information on who teaches Zumba classes at Zor Fitness Club. I recommend checking our class schedule or contacting th"
+- run 2 T15 REFUSED: 'Can I get a refund if I move to Karachi?' -> "Our documents don't cover that. Please contact the front desk on WhatsApp for more information."
+- run 2 T18 WRONG: 'Which class runs on Sunday?' -> "Let's find the Sunday classes together. Which branch are you a member of?\n\nSources: faq_freeze_refund_cancel.md, admission_fee.md, policy_re"
+- run 2 N1 WRONG: 'How much is the Plus plan?' -> 'The Plus plan at the F-7 Islamabad branch is PKR 13,600 per month. Would you like to know more about this plan or anything else?\n\nSources: p'
+- run 2 N2 REFUSED: 'Can students get a discount?' -> "That's a bit outside my department here at Zor Fitness Club -- but ask me about classes, memberships, or trainers and I'm all yours!"
+- run 2 T3 REFUSED: 'Is the admission fee waived if I pay for 6 months?' -> "Our documents don't cover that. Please contact the front desk on WhatsApp for more information."
+- run 2 T20 REFUSED: 'What is the Azadi offer?' -> "Our documents don't cover that. Please contact the front desk on WhatsApp for more information."
+- run 3 N7 WRONG: 'What is the price of the Platinum plan?' -> 'The Platinum plan at Zor Fitness Club is priced at PKR 43,200 for a 3-month commitment.\n\nSources: plan_comparison.md, pricing_prepaid_plans.'
+- run 3 T3 REFUSED: 'Is the admission fee waived if I pay for 6 months?' -> "Our documents don't cover that -- please contact the front desk on WhatsApp for more information."
+- run 3 N2 REFUSED: 'Can students get a discount?' -> "Our documents don't cover student discounts. Please contact the front desk on WhatsApp for more information."
+- run 3 T20 REFUSED: 'What is the Azadi offer?' -> "Our documents don't cover the Azadi offer. Please contact the front desk on WhatsApp for more information."
+- run 3 N14 REFUSED: 'Do you accept JazzCash?' -> "Our documents don't cover JazzCash acceptance. Please contact the front desk on WhatsApp for this information."
+- run 3 N10 WRONG: 'Who teaches Zumba?' -> 'Zumba classes at Zor Fitness Club are taught by Usman Tariq at the G-11 branch.\n\nSources: faq_classes_and_trainers.md, faq_new_members.md, c'
+- run 3 N11 REFUSED: 'How much is personal training?' -> "Our sources don't cover that information. You can ask the front desk on WhatsApp for details."
+- run 3 N15 REFUSED: 'Is there a sauna at Bahria?' -> "Our sources don't cover that information. You can ask the front desk on WhatsApp about the facilities at Bahria."

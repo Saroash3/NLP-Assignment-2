@@ -178,7 +178,8 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
                     # reply would produce, so the frontend can't tell the difference.
                     for word in redirect.split(" "):
                         await _send(websocket, TokenEvent(content=word + " "))
-                    conversation_manager.record_turn(session, user_text, redirect)
+                    # Redirects are not kept in the model's history (no facts; they prime refusals).
+                    conversation_manager.record_turn(session, user_text, redirect, remember=False)
                     await _send(websocket, DoneEvent(stage=session.stage.value))
                 else:
                     prompt_messages, used_sources = conversation_manager.build_prompt(
@@ -201,7 +202,10 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
                         await _send(websocket, TokenEvent(content=conversation_manager.source_line(sources)))
                     # History keeps the reply WITHOUT the source line: otherwise the model copies
                     # "Sources: ..." into its next answers and the line appears twice.
-                    conversation_manager.record_turn(session, user_text, full_reply)
+                    conversation_manager.record_turn(
+                        session, user_text, full_reply,
+                        remember=not conversation_manager.is_refusal(full_reply),
+                    )
                     await _send(websocket, DoneEvent(stage=session.stage.value, sources=sources))
             except LLMEngineError as e:
                 await _send(websocket, ErrorEvent(message=str(e), code="llm_error"))
