@@ -3,6 +3,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TRAINERS } from "@/data/gymData";
+import { cn } from "@/lib/utils";
+import { avatarUri } from "./avatar";
 import { Section, SectionHeading } from "./Section";
 
 /** Embla carousel of the 9 coaches (drag/swipe, arrow buttons, keyboard-focusable buttons). */
@@ -52,14 +54,20 @@ export function Coaches() {
               key={t.name}
               className="group min-w-0 shrink-0 basis-[80%] overflow-hidden rounded-3xl border border-line bg-surface sm:basis-[45%] lg:basis-[30%]"
             >
-              <div className="relative h-64 overflow-hidden">
+              <div
+                className={cn(
+                  "relative h-64 overflow-hidden",
+                  t.female
+                    ? "bg-[radial-gradient(70%_70%_at_50%_75%,rgba(16,185,129,0.28),transparent_70%)]"
+                    : "bg-[radial-gradient(70%_70%_at_50%_75%,rgba(200,255,61,0.22),transparent_70%)]",
+                )}
+              >
                 <img
-                  src={t.photoUrl}
-                  alt=""
-                  loading="lazy"
-                  className="size-full object-cover grayscale transition duration-500 group-hover:scale-105 group-hover:grayscale-0"
+                  src={avatarUri(t.name, t.look)}
+                  alt={`Illustration of ${t.name}`}
+                  className="absolute inset-x-0 bottom-0 mx-auto h-[92%] w-auto transition duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/10 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-surface to-transparent" />
                 <span className="absolute bottom-4 left-4 inline-flex items-center gap-1 rounded-full bg-graphite/80 px-3 py-1 text-xs text-ink backdrop-blur">
                   <MapPin className="size-3 text-volt" /> {t.branch}
                 </span>

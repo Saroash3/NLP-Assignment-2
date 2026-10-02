@@ -17,7 +17,10 @@ export function useSmoothScroll(reducedMotion: boolean) {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (reducedMotion) return;
-    const lenis = new Lenis({ lerp: 0.1 });
+    // lerp = share of the remaining distance covered per frame. The Lenis default (0.1) felt
+    // sluggish (only ~63% of a wheel notch after 150 ms); 0.25 reaches ~92% in that time, so it
+    // scrolls at normal speed while staying smooth.
+    const lenis = new Lenis({ lerp: 0.25 });
     lenisRef.current = lenis;
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => lenis.raf(time * 1000);

@@ -1,10 +1,10 @@
+import { lazy, Suspense } from "react";
 import { MotionConfig, useReducedMotion } from "framer-motion";
 import { Nav } from "./landing/Nav";
 import { Hero } from "./landing/Hero";
 import { Stats } from "./landing/Stats";
 import { Plans } from "./landing/Plans";
 import { Classes } from "./landing/Classes";
-import { Coaches } from "./landing/Coaches";
 import { Facilities } from "./landing/Facilities";
 import { Ladies } from "./landing/Ladies";
 import { Stories } from "./landing/Stories";
@@ -12,6 +12,10 @@ import { Branches } from "./landing/Branches";
 import { Faq } from "./landing/Faq";
 import { Footer } from "./landing/Footer";
 import { useSmoothScroll } from "./landing/useSmoothScroll";
+import { SectionBoundary } from "./landing/SectionBoundary";
+
+// The coach avatars (DiceBear artwork, ~130 KB) load in their own chunk, right after first paint.
+const Coaches = lazy(() => import("./landing/Coaches").then((m) => ({ default: m.Coaches })));
 
 /**
  * The marketing landing page. Every "Chat with Nova" button calls onEnter, which switches
@@ -32,7 +36,11 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
           <Stats reducedMotion={reducedMotion} />
           <Plans onChat={onEnter} />
           <Classes />
-          <Coaches />
+          <SectionBoundary id="coaches">
+            <Suspense fallback={<section id="coaches" className="min-h-[900px]" aria-busy="true" />}>
+              <Coaches />
+            </Suspense>
+          </SectionBoundary>
           <Facilities reducedMotion={reducedMotion} />
           <Ladies />
           <Stories reducedMotion={reducedMotion} />

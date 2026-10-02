@@ -5,6 +5,7 @@
  * Static display data only (no API call).
  */
 import type { LucideIcon } from "lucide-react";
+import type { AvatarLook } from "@/components/landing/avatar";
 import { Baby, Bike, Citrus, Dumbbell, Flame, ShowerHead, Users, Waves } from "lucide-react";
 
 // ---------------------------------------------------------------- stats
@@ -123,21 +124,22 @@ export interface TrainerInfo {
   specialty: string;
   branch: string;
   bio: string;
-  /** randomuser.me placeholder portraits: stand-ins for a demo, not photos of real named people. */
-  photoUrl: string;
+  /** Illustrated portrait settings (see components/landing/avatar.ts): South Asian skin tones,
+   *  black hair, beards and hijab, so the fictional coaches look Pakistani. */
+  look: AvatarLook;
   female?: boolean;
 }
 
 export const TRAINERS: TrainerInfo[] = [
-  { name: "Hamza Qureshi", specialty: "Head Coach · Strength & Powerlifting", branch: "F-7", bio: "11 years coaching. Rule: form before weight -- three clean reps before adding a plate.", photoUrl: "https://randomuser.me/api/portraits/men/32.jpg" },
-  { name: "Sana Iftikhar", specialty: "Women's Strength & PCOS", branch: "F-7 Ladies Floor", bio: "Former national-level netball player; built the Ladies Strength & PCOS Program.", photoUrl: "https://randomuser.me/api/portraits/women/44.jpg", female: true },
-  { name: "Mahnoor Rizvi", specialty: "Yoga, Pilates & Prenatal", branch: "F-7 · Bahria", bio: "500-hour yoga teacher and certified prenatal instructor.", photoUrl: "https://randomuser.me/api/portraits/women/65.jpg", female: true },
-  { name: "Farah Naz", specialty: "Zumba & Dance Fitness", branch: "F-7 · Bahria", bio: "Licensed Zumba instructor since 2018 -- Latin, Bollywood and Punjabi beats.", photoUrl: "https://randomuser.me/api/portraits/women/21.jpg", female: true },
-  { name: "Bilal Khattak", specialty: "HIIT & Boxing", branch: "Bahria · F-7", bio: "Former amateur boxer from Peshawar. Pad work, footwork -- no sparring.", photoUrl: "https://randomuser.me/api/portraits/men/78.jpg" },
-  { name: "Zeeshan Haider", specialty: "Spin & Endurance", branch: "Bahria", bio: "Three-time Lahore Marathon finisher; runs the 24-bike spin studio.", photoUrl: "https://randomuser.me/api/portraits/men/67.jpg" },
-  { name: "Usman Tariq", specialty: "Kettlebells · Zor Circuit", branch: "G-11", bio: "Created Zor Circuit: 45 minutes, full body, small floor.", photoUrl: "https://randomuser.me/api/portraits/men/45.jpg" },
-  { name: "Hira Saleem", specialty: "Ladies Functional & Weight Loss", branch: "G-11 ladies hours", bio: "Certified PT who tracks fat loss with InBody, not just the scale.", photoUrl: "https://randomuser.me/api/portraits/women/33.jpg", female: true },
-  { name: "Ali Raza", specialty: "Bodybuilding & Muscle Gain", branch: "G-11 · F-7", bio: "9 years coaching; provincial-level physique competitor.", photoUrl: "https://randomuser.me/api/portraits/men/52.jpg" },
+  { name: "Hamza Qureshi", specialty: "Head Coach · Strength & Powerlifting", branch: "F-7", bio: "11 years coaching. Rule: form before weight -- three clean reps before adding a plate.", look: { skin: "d08b5b", top: "shortFlat", beard: "beardMedium", clothing: "shirtCrewNeck", clothesColor: "262e33" } },
+  { name: "Sana Iftikhar", specialty: "Women's Strength & PCOS", branch: "F-7 Ladies Floor", bio: "Former national-level netball player; built the Ladies Strength & PCOS Program.", look: { skin: "edb98a", top: "hijab", hijabColor: "25557c", clothing: "shirtScoopNeck", clothesColor: "3c4f5c" }, female: true },
+  { name: "Mahnoor Rizvi", specialty: "Yoga, Pilates & Prenatal", branch: "F-7 · Bahria", bio: "500-hour yoga teacher and certified prenatal instructor.", look: { skin: "edb98a", top: "straight01", clothing: "shirtVNeck", clothesColor: "929598" }, female: true },
+  { name: "Farah Naz", specialty: "Zumba & Dance Fitness", branch: "F-7 · Bahria", bio: "Licensed Zumba instructor since 2018 -- Latin, Bollywood and Punjabi beats.", look: { skin: "d08b5b", top: "bun", clothing: "hoodie", clothesColor: "ff488e" }, female: true },
+  { name: "Bilal Khattak", specialty: "HIIT & Boxing", branch: "Bahria · F-7", bio: "Former amateur boxer from Peshawar. Pad work, footwork -- no sparring.", look: { skin: "edb98a", top: "shortRound", beard: "beardMajestic", clothing: "hoodie", clothesColor: "262e33" } },
+  { name: "Zeeshan Haider", specialty: "Spin & Endurance", branch: "Bahria", bio: "Three-time Lahore Marathon finisher; runs the 24-bike spin studio.", look: { skin: "d08b5b", top: "theCaesarAndSidePart", beard: "beardLight", clothing: "shirtVNeck", clothesColor: "5199e4" } },
+  { name: "Usman Tariq", specialty: "Kettlebells · Zor Circuit", branch: "G-11", bio: "Created Zor Circuit: 45 minutes, full body, small floor.", look: { skin: "ae5d29", top: "shortWaved", beard: "beardLight", clothing: "shirtCrewNeck", clothesColor: "3c4f5c" } },
+  { name: "Hira Saleem", specialty: "Ladies Functional & Weight Loss", branch: "G-11 ladies hours", bio: "Certified PT who tracks fat loss with InBody, not just the scale.", look: { skin: "d08b5b", top: "hijab", hijabColor: "262e33", clothing: "collarAndSweater", clothesColor: "65c9ff" }, female: true },
+  { name: "Ali Raza", specialty: "Bodybuilding & Muscle Gain", branch: "G-11 · F-7", bio: "9 years coaching; provincial-level physique competitor.", look: { skin: "ae5d29", top: "shavedSides", beard: "beardMedium", clothing: "shirtCrewNeck", clothesColor: "262e33" } },
 ];
 
 // ---------------------------------------------------------------- facilities
