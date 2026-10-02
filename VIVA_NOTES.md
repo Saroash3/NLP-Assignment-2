@@ -31,7 +31,7 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 ### Indexing
 | Decision | Why |
 |---|---|
-| **all-MiniLM-L6-v2** embeddings | Small (90 MB), fast on a CPU (~7 ms per query), good for short English text, fully local. |
+| **all-MiniLM-L6-v2** embeddings | Small (90 MB), fast on a CPU (~7–12 ms per query), good for short English text, fully local. |
 | **Chroma** vector store | Local, saves to one folder, and stores **metadata** (file name, hash) next to each vector, which we need for citations and incremental updates. FAISS stores only vectors. |
 | Chunks of **80–150 words** (not 200–300) | MiniLM only reads the first **256 tokens**. Our Markdown is ~1.7 tokens per word, so 300-word chunks lost their ending: 64% were truncated. Measured, then chosen. |
 | Cut at **headings / blank lines**, never mid-paragraph | A rule or a price row stays in one piece. |
@@ -74,9 +74,9 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 | Load the model and index **once at startup** | Loading takes seconds; per request it would be far too slow. |
 | **asyncio.to_thread** for embedding + search | They are CPU work; in a thread, the async server keeps serving other users. |
 | **2 s timeout** | A stuck search must never hang the chat. |
-| **Two LRU caches** (embeddings, results) | A repeated question costs 0.04 ms instead of 9.4 ms. |
+| **Two LRU caches** (embeddings, results) | A repeated question costs ~0.03 ms instead of ~15 ms. |
 | **Index version in the cache key** | After `python -m rag.index`, old cache entries can never match, so no stale answers. Embeddings stay cached because they don't depend on the documents. |
-| `OLLAMA_NUM_PARALLEL=4` | Ollama answered one request at a time; with 4 slots, the worst wait for 10 users went from 5.4 s to 3.0 s. |
+| `OLLAMA_NUM_PARALLEL=4` | Ollama answered one request at a time; with 4 slots, the worst wait for 10 users went from 5.4 s to 2.7 s. |
 
 ### Failures
 | Case | What happens |
@@ -213,8 +213,8 @@ grounding rule makes the model say "our documents don't cover that". Real exampl
 the system prompt is always kept, the lowest-ranked chunks are dropped, then the oldest history,
 and the user message is capped at 1,000 tokens.
 
-**Does retrieval make the chat slower?** No. 9–10 ms, in parallel with the 350 ms classifier call.
-Retrieval is 0.8% of the total reply time.
+**Does retrieval make the chat slower?** No. About 15 ms, in parallel with the ~360 ms classifier call.
+Retrieval is about 2% of the total reply time.
 
 **What happens if Chroma breaks?** Retrieval returns "unavailable" within 2 s, it is logged, and
 the model is told it has no facts and must point to the UAN, WhatsApp or the branch desk. Tested
