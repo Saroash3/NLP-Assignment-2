@@ -222,10 +222,10 @@ Reproduce the table with `backend/.venv/Scripts/python.exe eval/threshold_scores
 "and for ladies?" means nothing on its own, since it scored only 0.31–0.36. **Rule:** a message is
 embedded together with the previous user message **only if it looks like a follow-up**. That means
 it's short (6 words or fewer) **and** it either starts with a connector ("and", "or", "what about",
-"how about", "for", "aur"…) or refers back with a pronoun ("it", "that", "them"…). As a fallback,
-a short message that finds nothing above the threshold on its own is retried once together with
-the previous message (e.g. "ladies?"). Everything else, including short **complete** questions
-like "What is the guest fee?", is embedded alone.
+"how about", "for", "aur"…) or refers back with a pronoun ("it", "that", "them"…). Everything else,
+including short **complete** questions like "What is the guest fee?", is embedded alone.
+Chunks found through a merged query are used to answer, but they can **never overrule the
+off-topic classifier** (§5.4): only the message's own match can.
 
 > **Bug found in live use and fixed.** The first version merged *every* message of 6 words or
 > fewer with the previous one. In real mixed sessions, short complete questions got glued to
@@ -278,7 +278,8 @@ after "Do you accept JazzCash?" was wrongly redirected in live testing (§9.4).
 
 ### 5.5 Visible citations in the chat UI (bonus)
 When an answer was grounded, the chat shows the source documents as small chips under the
-message:
+message. Below: a grounded answer, a rule-based "No" (both with chips), and an off-topic
+question (no chips):
 
 ![Citation chips in the chat](docs/citations_screenshot.png)
 
@@ -293,11 +294,12 @@ message:
   the field is **omitted entirely**, so `done` is byte-for-byte Assignment 1's. An old frontend
   simply ignores the field.
 - **Frontend:** `useChatSocket` attaches `sources` to the reply that just finished streaming;
-  `MessageBubble` renders the chips (violet accent, fade-in) only when the list exists.
+  `MessageBubble` renders the chips (volt accent, fade-in) only when the list exists.
 - **Tested:** `test_streaming_contract.py` checks the field's presence and values for grounded and
   override answers, its absence for no-match, retrieval failure and off-topic, deduplication, and
   the "don't cover" rule. It was also checked in a real browser with Playwright: 23 token frames
-  gave 23 DOM updates (streaming unchanged), chips appeared for grounded answers and not for BJJ,
+  gave 23 DOM updates (streaming unchanged), chips appeared for grounded answers and not for off-topic
+  redirects,
   and there were no page errors.
 
 ---
@@ -527,7 +529,17 @@ scores and files. That showed **three separate causes**:
 | BJJ / Lahore / off-topic / small-talk controls | 2/3 · 3/3 · 6/6 · 3/3 | 3/3 · 3/3 · 6/6 · 3/3 |
 | Off-topic battery (classifier) | 10/10 off-topic caught | 10/10 off-topic caught |
 
-The one remaining wrong answer is an invented Platinum price (limitation 14). The raw replies are in
+The one remaining wrong answer is an invented Platinum price (limitation 14).
+
+**Follow-up regression, found and fixed.** A first version of fix 1 also retried a short message
+*merged with the previous one* whenever it found nothing on its own. A screenshot session showed
+the problem: *"Who won the cricket World Cup?"* asked right after a guest question borrowed the
+guest policy's score (0.77), overruled the classifier, and was answered with guest-policy chips.
+That fallback was removed, and chunks found through any merged query can no longer overrule the
+classifier (regression tests in `test_rag_prompt.py`). Re-measured after this fix (3 runs, 105
+answerable replies): **0 refusals (0%)**, **103/105 correct (98.1%)**, chips on 105/105, and all
+controls as expected. The 2 misses were vague answers to "Can students get a discount?" (true, but
+without the 25%), with no wrong prices. The raw replies are in
 `eval/live_session_before.json` and `eval/live_session_after_final.json`.
 
 **One visible behaviour change:** questions about things we don't offer now get a grounded "No",
@@ -579,13 +591,13 @@ Unchanged from Assignment 1, except for **one optional field** on `done` (citati
 ## 11. Testing
 
 ```bash
-cd backend && python -m pytest -q        # 86 tests, about 1.5 minutes, no Ollama needed
+cd backend && python -m pytest -q        # 87 tests, about 1.5 minutes, no Ollama needed
 ```
 | File | What it covers |
 |---|---|
 | `test_conversation_manager.py`, `test_llm_engine.py`, `test_websocket.py` | Assignment 1 (still passing) |
 | `test_rag_index.py` | chunking rules, heading prefix, incremental add, update and delete |
-| `test_rag_prompt.py` | follow-up rule (complete short questions embedded alone, real follow-ups merged, fallback), refusals kept out of history, "No + reason" prompt rule, threshold, source labels, budget |
+| `test_rag_prompt.py` | follow-up rule (complete short questions embedded alone, real follow-ups merged, merged chunks never overrule the classifier), refusals kept out of history, "No + reason" prompt rule, threshold, source labels, budget |
 | `test_rag_cache.py` | cache hits, re-index invalidation, cached results returned as copies |
 | `test_streaming_contract.py` | WebSocket events identical to Assignment 1 in all RAG paths; the optional `sources` field only when grounded |
 | `test_failures.py` | all Phase IV failure cases (§8) |
@@ -661,7 +673,7 @@ backend/
     retriever.py           retrieve(query) + LRU caches
     benchmark.py           latency benchmark (python -m rag.benchmark)
     chroma_db/             the vector index (git-ignored; rebuilt by rag.index)
-  tests/                   86 tests
+  tests/                   87 tests
 eval/                      test questions, threshold scores, e2e examples, concurrency test, consistency check
 evaluation/                Assignment 1 off-topic battery (+ results.md with before/after runs)
 frontend/                  React + Vite UI

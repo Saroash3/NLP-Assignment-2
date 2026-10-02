@@ -46,7 +46,7 @@ guaranteed to fit in 4,096 tokens, and the reply streams back token by token, ex
 | **top-k = 4** | The assignment says at least 3. 4 chunks is about 1,000 tokens, which fits the budget. |
 | **Threshold 0.35** | From real scores: off-topic ≤ 0.17, small talk ≤ 0.30, weakest real question 0.375. 0.35 separates them. |
 | Gym-related but uncovered questions (BJJ) are **handled by the prompt, not the threshold** | BJJ scored 0.520, the same as real questions, so no threshold can separate them. The prompt says "if the sources don't answer it, say so." |
-| **Follow-up rule:** add the previous user message only if the message is short **and** starts with a connector ("and", "what about", "aur"…) or refers back with a pronoun ("it", "that"…); fall back to the merged query only if the message alone finds nothing | "and for ladies?" alone means nothing (score ~0.36). But short *complete* questions ("What is the guest fee?") must be embedded alone. The first version merged every message of 6 words or fewer, and in live sessions that pulled in the wrong documents (50% failures when merged). |
+| **Follow-up rule:** add the previous user message only if the message is short **and** starts with a connector ("and", "what about", "aur"…) or refers back with a pronoun ("it", "that"…). Chunks found through a merged query never overrule the classifier | "and for ladies?" alone means nothing (score ~0.36). But short *complete* questions ("What is the guest fee?") must be embedded alone. The first version merged every message of 6 words or fewer, and in live sessions that pulled in the wrong documents (50% failures when merged). A later "retry merged if nothing found" fallback let "Who won the cricket World Cup?" borrow the previous question's documents and get answered, so it was removed. |
 | **Refused or redirected exchanges are not kept in history** | They contain no facts, and the 3B model copied them: with 2 refusals in the history, an answerable question went from answered to refused 3/3. |
 | **"No + reason" instead of "don't cover"** | When a source rule excludes the case (student discount on Elite, a guest after a trial), the right answer is "No -- <rule>". "Our documents don't cover that" is only for questions the documents truly lack. |
 | **The 4 plan names in the gym identity** | It stops the model inventing prices for plans that don't exist ("Platinum"). |
@@ -257,7 +257,7 @@ listed honestly in the README's Known Limitations.
 ```bash
 cd backend
 python -m rag.index --samples 3                          # build the index + show stats and 3 chunks
-python -m pytest -q                                      # 86 tests
+python -m pytest -q                                      # 87 tests
 python -m rag.benchmark                                  # latency tables
 uvicorn app.main:app --port 8000                         # run the backend
 ../backend/.venv/Scripts/python.exe ../eval/e2e_examples.py      # 5 real conversations (backend running)

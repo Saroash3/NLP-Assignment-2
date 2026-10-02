@@ -89,7 +89,7 @@ PER_MESSAGE_OVERHEAD = 5  # chat-template tokens Qwen adds around each message
 # guest fee?", "Is there a pool at F-7?"); gluing them to an unrelated previous question
 # retrieved the WRONG documents (measured: 50% failures when merged vs 12% alone). So a short
 # message is merged only if it LOOKS like a follow-up: it starts with a connector, or refers
-# back with a pronoun -- or, as a fallback, it finds nothing above the threshold on its own.
+# back with a pronoun. Chunks found through a merged query never overrule the classifier.
 FOLLOW_UP_MAX_WORDS = 6
 FOLLOW_UP_STARTERS = ("and ", "or ", "also ", "what about", "how about", "for ", "but ", "so ",
                       "then ", "aur ", "or what", "same ")
@@ -284,14 +284,16 @@ class ConversationManager:
             return [c for c in chunks if c["score"] >= settings.similarity_threshold]
 
         query = self.retrieval_query(session, user_text)
-        previous = self.previous_user_message(session)
         try:
             relevant = await search(query)
-            # Fallback: a short fragment without a marker word ("ladies?") that finds nothing
-            # on its own is tried once more together with the previous user message.
-            if (not relevant and query == user_text and previous
-                    and len(user_text.split()) <= FOLLOW_UP_MAX_WORDS):
-                relevant = await search(f"{previous} {user_text}")
+            # (No "retry merged if nothing found" fallback: it gave greetings and off-topic
+            # messages the PREVIOUS question's documents and chips.)
+            if query != user_text:
+                # Chunks found with the help of the PREVIOUS message. They may answer a real
+                # follow-up, but they say nothing about whether THIS message is on-topic, so
+                # apply_retrieval_override ignores them ("Who won the cricket World Cup?" after
+                # a guest question must still be redirected).
+                relevant = [{**c, "merged": True} for c in relevant]
         except Exception as e:  # includes TimeoutError from wait_for
             logger.warning("Retrieval unavailable (%s: %s); replying without documents",
                            type(e).__name__, e)
@@ -304,7 +306,9 @@ class ConversationManager:
         "Bahria" or a trainer's name). If it said OFF_TOPIC (redirect is not None) but a
         document matches strongly, trust the documents: return None = answer normally.
         """
-        if redirect is not None and chunks:
+        # Only the message's OWN retrieval may overrule the classifier, never chunks that were
+        # found by merging it with the previous message.
+        if redirect is not None and chunks and not chunks[0].get("merged"):
             best = chunks[0]["score"]
             if best >= get_settings().classifier_override_score:
                 logger.info("Classifier said OFF_TOPIC, but %s matched at %.3f; answering "

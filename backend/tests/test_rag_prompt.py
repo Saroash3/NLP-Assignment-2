@@ -46,21 +46,41 @@ def test_real_follow_ups_are_still_merged(follow_up):
     assert cm.retrieval_query(session, follow_up).startswith("What are the timings at the Bahria branch?")
 
 
-async def test_fragment_without_marker_falls_back_to_merged_query(monkeypatch):
+async def test_unrelated_message_never_borrows_the_previous_questions_documents(monkeypatch):
+    # Regression test: "Who won the cricket World Cup?" right after a guest question must NOT be
+    # answered with the guest policy (an earlier "retry merged" fallback did exactly that).
     queries = []
 
     def fake_retrieve(query):
         queries.append(query)
-        score = 0.66 if "Bahria" in query else 0.10  # alone it finds nothing, merged it does
-        return [{"source": "branch_bahria_rawalpindi.md", "section": "", "text": "x", "score": score}]
+        score = 0.77 if "guest" in query else 0.17
+        return [{"source": "policy_guest.md", "section": "", "text": "x", "score": score}]
 
     monkeypatch.setattr(cm_module.retriever, "retrieve", fake_retrieve)
     cm = ConversationManager()
     session = cm.create_session()
-    cm.record_turn(session, "What are the timings at the Bahria branch?", "…")
-    chunks = await cm.retrieve_context(session, "ladies?")
-    assert queries == ["ladies?", "What are the timings at the Bahria branch? ladies?"]
-    assert chunks and chunks[0]["source"] == "branch_bahria_rawalpindi.md"
+    cm.record_turn(session, "Can I bring a guest to G-11 on a weekday evening?", "No -- ...")
+    for text in ("Who won the cricket World Cup?", "hi", "thanks!"):
+        assert await cm.retrieve_context(session, text) == []  # embedded alone -> no match
+    assert queries == ["Who won the cricket World Cup?", "hi", "thanks!"]
+
+
+async def test_merged_retrieval_never_overrides_the_off_topic_classifier(monkeypatch):
+    # A real follow-up form ("and ...") is merged for retrieval, but chunks found that way say
+    # nothing about whether THIS message is on-topic, so they can't overrule the classifier.
+    def fake_retrieve(query):
+        score = 0.77 if "guest" in query else 0.17
+        return [{"source": "policy_guest.md", "section": "", "text": "x", "score": score}]
+
+    monkeypatch.setattr(cm_module.retriever, "retrieve", fake_retrieve)
+    cm = ConversationManager()
+    session = cm.create_session()
+    cm.record_turn(session, "Can I bring a guest to G-11 on a weekday evening?", "No -- ...")
+    chunks = await cm.retrieve_context(session, "and who won the World Cup?")
+    assert chunks and chunks[0]["merged"]
+    assert cm.apply_retrieval_override("redirect text", chunks) == "redirect text"  # stays off-topic
+    own = [{"source": "branch_bahria_rawalpindi.md", "section": "", "text": "x", "score": 0.64}]
+    assert cm.apply_retrieval_override("redirect text", own) is None  # its OWN strong match still overrides
 
 
 def test_refusals_and_redirects_are_not_kept_in_history():
