@@ -153,7 +153,7 @@ Rawalpindi).
 [`backend/rag/index.py`](backend/rag/index.py) — run with `python -m rag.index [--samples 3]`.
 
 ### 4.1 Embedding model: `sentence-transformers/all-MiniLM-L6-v2`
-- **Why:** small (~90 MB, 384-dimensional vectors), fast on a CPU (about 7 ms per query here),
+- **Why:** small (~90 MB, 384-dimensional vectors), fast on a CPU (about 7–12 ms per query here),
   good quality for short English passages, and runs fully locally.
 - **Trade-off:** it's an English model that only reads the **first 256 tokens** of a text.
   That limit decided our chunk size (§4.3).
@@ -330,28 +330,32 @@ The API still rejects messages over 2,000 characters, as in Assignment 1.
 Ollama runs `qwen2.5:3b` (Q4_K_M) on the GPU; MiniLM and Chroma run on the CPU.
 
 ### 7.1 Retrieval latency (target < 1 s)
-`cd backend && python -m rag.benchmark` (25 test questions, warm rows = 3 rounds = 75 samples):
+`cd backend && python -m rag.benchmark` (25 test questions, warm rows = 3 rounds = 75 samples).
+Final run: 3 October 2026, with the final code and `OLLAMA_NUM_PARALLEL=4`. The backend and the
+Vite dev server were running on the same machine at the same time, so the CPU numbers are
+slightly pessimistic.
 
 | Retrieval only | Samples | Avg ms | Median ms | p95 ms |
 |---|---|---|---|---|
-| Cold start: load model + open index (once, at server startup) | 1 | 8,112 | – | – |
-| Cold: first query after loading | 1 | 34.1 | – | – |
-| Warm, cache miss: embed query | 75 | 7.40 | 7.59 | 8.53 |
-| Warm, cache miss: vector search | 75 | 1.91 | 1.93 | 2.17 |
-| **Warm, cache miss: total retrieval** | 75 | **9.38** | **9.57** | **10.44** |
-| **Warm, cache hit** | 75 | **0.04** | **0.03** | **0.05** |
+| Cold start: load model + open index (once, at server startup) | 1 | 7,683 | – | – |
+| Cold: first query after loading | 1 | 60.3 | – | – |
+| Warm, cache miss: embed query | 75 | 11.69 | 11.38 | 15.16 |
+| Warm, cache miss: vector search | 75 | 2.13 | 2.11 | 2.30 |
+| **Warm, cache miss: total retrieval** | 75 | **14.91** | **14.17** | **21.16** |
+| **Warm, cache hit** | 75 | **0.03** | **0.02** | **0.04** |
 
 | End-to-end, same code path as the server (20 answerable questions) | Samples | Avg ms | Median ms | p95 ms |
 |---|---|---|---|---|
-| Retrieval (in parallel with the classifier) | 20 | 9.93 | 9.91 | 11.63 |
-| Off-topic classifier (LLM call) | 20 | 354 | 345 | 353 |
-| **Time to first token** | 20 | 932 | **807** | 838 |
-| **Total reply time** | 20 | 1,304 | **1,118** | 1,515 |
+| Retrieval (in parallel with the classifier) | 20 | 22.01 | 21.64 | 28.93 |
+| Off-topic classifier (LLM call) | 20 | 362 | 359 | 385 |
+| **Time to first token** | 20 | 941 | **825** | 893 |
+| **Total reply time** | 20 | 1,260 | **1,169** | 1,618 |
 
-- **Retrieval takes about 9–10 ms (about 100× under the 1 s target) and is 0.8% of the total reply time.**
-  It overlaps the classifier call, so it adds about 0 ms before the first token.
+- **Retrieval takes about 15 ms (about 70× under the 1 s target) and is 1.9% of the total reply
+  time.** It overlaps the ~360 ms classifier call, so it adds about 0 ms before the first token.
+  An earlier run on an otherwise idle machine measured 9.4 ms per cache miss.
 - The average time to first token is above the p95 because of **one** request: the first one
-  after loading (~3.2 s), when Ollama processes the whole system prompt for the first time. After
+  after loading (~3 s), when Ollama processes the whole system prompt for the first time. After
   that, the unchanged prefix is reused, which is why the sources go last in the prompt.
 - The cold start happens once, at server startup (§1.5 cuts it with `HF_HUB_OFFLINE`).
 
@@ -365,7 +369,7 @@ that is embedded** (after the follow-up rule):
   `stat()` call) on every request. After a re-index, old entries can never match, so **stale
   chunks are never served**, even to an already running server. Tested in
   [tests/test_rag_cache.py](backend/tests/test_rag_cache.py): a PKR 1,000 → 1,500 edit is picked up.
-- A cache hit costs 0.04 ms, compared with 9.4 ms for a miss.
+- A cache hit costs about 0.03 ms, compared with about 15 ms for a miss.
 
 ### 7.3 Concurrency
 Retrieval runs in a worker thread (`asyncio.to_thread`), and the model loads once at startup,
@@ -374,20 +378,21 @@ so the server's event loop is never blocked. Measured with
 asking a different question, timed from sending the message; a probe calls the server during
 the run):
 
-| | `OLLAMA_NUM_PARALLEL=1` (default) | `OLLAMA_NUM_PARALLEL=4` |
+| | `OLLAMA_NUM_PARALLEL=1` (default, 1 Oct) | `OLLAMA_NUM_PARALLEL=4` (final code, 3 Oct) |
 |---|---|---|
-| Single user, time to first token (median) | 0.82 s | 0.83 s |
-| 5 clients: time to first token median / max | 1.54 / 2.54 s | **0.92 / 1.31 s** |
-| 10 clients: time to first token median / max | 3.17 / 5.37 s | **1.75 / 2.95 s** |
-| 10 clients: all replies finished | 5.59 s | **3.64 s** |
-| `POST /session/new` during the load (our server only) | ~3 ms | ~1–3 ms |
+| Single user, time to first token (median) | 0.82 s | 0.79 s |
+| 5 clients: time to first token median / max | 1.54 / 2.54 s | **0.84 / 1.15 s** |
+| 5 clients: all replies finished | 2.85 s | **1.57 s** |
+| 10 clients: time to first token median / max | 3.17 / 5.37 s | **1.34 / 2.65 s** |
+| 10 clients: all replies finished | 5.59 s | **3.46 s** |
+| `POST /session/new` during the load (our server only) | ~3 ms | ~3 ms |
 | Ollama memory | 2.2 GB | 2.7 GB |
 
 **Honest reading:** the server stays responsive (`/session/new` in a few ms while 10 clients
 wait), but **Ollama queues generation calls**. With the default `OLLAMA_NUM_PARALLEL=1`, each
 extra client waits about 0.45 s longer, because every message makes 2 LLM calls (classifier +
-reply). `OLLAMA_NUM_PARALLEL=4` cuts the worst wait by 45% for 0.5 GB more memory, and
-single-user speed is unchanged. It's set on the test machine (§1.5).
+reply). `OLLAMA_NUM_PARALLEL=4` cuts the worst wait for 10 users by about half (5.37 s → 2.65 s) for 0.5 GB
+more memory, and single-user speed is unchanged. It's set on the test machine (§1.5).
 
 ### 7.4 Streaming is unchanged from Assignment 1
 [tests/test_streaming_contract.py](backend/tests/test_streaming_contract.py) checks three paths
