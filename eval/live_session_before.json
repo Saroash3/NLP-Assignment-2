@@ -1,0 +1,4116 @@
+[
+ {
+  "run": 1,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "N4",
+  "q": "Is there a pool at F-7?",
+  "expect": "20 ?m|heated|yes",
+  "reply": "Yes, there is a pool at F-7 Islamabad branch. It's in the basement and is the only pool at Zor Fitness Club.\n\nSources: facility_pool.md, policy_age_and_minors.md, policy_dress_code.md",
+  "sources": [
+   "facility_pool.md",
+   "policy_age_and_minors.md",
+   "policy_dress_code.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is there a pool at F-7?",
+  "top": [
+   [
+    "facility_pool.md",
+    "0.623"
+   ],
+   [
+    "policy_age_and_minors.md",
+    "0.602"
+   ],
+   [
+    "policy_dress_code.md",
+    "0.594"
+   ],
+   [
+    "facility_pool.md",
+    "0.584"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T3",
+  "q": "Is the admission fee waived if I pay for 6 months?",
+  "expect": "waiv|no admission",
+  "reply": "Our documents don't cover that. Please contact the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Is the admission fee waived if I pay for 6 months?",
+  "top": [
+   [
+    "admission_fee.md",
+    "0.587"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.551"
+   ],
+   [
+    "policy_refund.md",
+    "0.544"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.537"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "T12",
+  "q": "Is there a sauna at the Bahria branch?",
+  "expect": "no sauna|steam|doesn.?t have a sauna|not have a sauna",
+  "reply": "No sauna is available at the Bahria branch.\n\nSources: facility_steam_sauna.md, branch_bahria_rawalpindi.md, plan_plus.md, ladies_areas_overview.md",
+  "sources": [
+   "facility_steam_sauna.md",
+   "branch_bahria_rawalpindi.md",
+   "plan_plus.md",
+   "ladies_areas_overview.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is there a sauna at the Bahria branch?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.691"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.606"
+   ],
+   [
+    "plan_plus.md",
+    "0.518"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.486"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "T2",
+  "q": "Why is the Standard plan cheaper at G-11 than at F-7?",
+  "expect": "8,000|compact",
+  "reply": "G-11 is the compact branch with fewer facilities, such as no pool, no steam, and no sauna. It also has a lower monthly price of PKR 8,000 compared to F-7 and Bahria, which have a monthly price of PKR 12,000.\n\nSources: faq_fees_and_payments.md, plan_standard.md, branch_g11_islamabad.md",
+  "sources": [
+   "faq_fees_and_payments.md",
+   "plan_standard.md",
+   "branch_g11_islamabad.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Why is the Standard plan cheaper at G-11 than at F-7?",
+  "top": [
+   [
+    "faq_fees_and_payments.md",
+    "0.519"
+   ],
+   [
+    "plan_standard.md",
+    "0.488"
+   ],
+   [
+    "branch_g11_islamabad.md",
+    "0.476"
+   ],
+   [
+    "plan_comparison.md",
+    "0.466"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 4,
+  "kind": "offtopic",
+  "id": "C3",
+  "q": "Who won the cricket World Cup?",
+  "expect": null,
+  "reply": "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer question instead?",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "Why is the Standard plan cheaper at G-11 than at F-7? Who won the cricket World Cup?",
+  "top": [
+   [
+    "faq_fees_and_payments.md",
+    "0.404"
+   ],
+   [
+    "branch_f7_islamabad.md",
+    "0.398"
+   ],
+   [
+    "branch_g11_islamabad.md",
+    "0.396"
+   ],
+   [
+    "plan_standard.md",
+    "0.365"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "N13",
+  "q": "What is the late fee for instalments?",
+  "expect": "1,500",
+  "reply": "The late fee for instalments is PKR 1,500 after 7 days of unpaid instalments. After 15 days, entry is suspended and those days are not added back to your plan.\n\nSources: instalments_and_late_fee.md, pricing_prepaid_plans.md, faq_fees_and_payments.md",
+  "sources": [
+   "instalments_and_late_fee.md",
+   "pricing_prepaid_plans.md",
+   "faq_fees_and_payments.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the late fee for instalments?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.624"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.603"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.468"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.407"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "T6",
+  "q": "Who teaches the Ladies Strength and PCOS Program and when is it?",
+  "expect": "Sana",
+  "reply": "The Ladies Strength & PCOS Program is taught by Sana Iftikhar, and it runs on **Monday, Wednesday, and Friday** at **11:00am–12:00pm** at the F-7 Ladies Floor.\n\nSources: classes_ladies.md, faq_ladies.md, plan_ladies_only.md, trainer_sana_iftikhar.md",
+  "sources": [
+   "classes_ladies.md",
+   "faq_ladies.md",
+   "plan_ladies_only.md",
+   "trainer_sana_iftikhar.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Who teaches the Ladies Strength and PCOS Program and when is it?",
+  "top": [
+   [
+    "classes_ladies.md",
+    "0.724"
+   ],
+   [
+    "faq_ladies.md",
+    "0.618"
+   ],
+   [
+    "plan_ladies_only.md",
+    "0.574"
+   ],
+   [
+    "trainer_sana_iftikhar.md",
+    "0.56"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "T10",
+  "q": "Can I bring a guest to G-11 on a weekday evening?",
+  "expect": "6:00|6 ?pm|no guests|not allowed",
+  "reply": "No guests are allowed at G-11 on weekdays from 6:00pm to 9:00pm.\n\nSources: policy_guest.md, classes_functional_zor_circuit.md",
+  "sources": [
+   "policy_guest.md",
+   "classes_functional_zor_circuit.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I bring a guest to G-11 on a weekday evening?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.769"
+   ],
+   [
+    "policy_guest.md",
+    "0.605"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.525"
+   ],
+   [
+    "policy_guest.md",
+    "0.481"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "T18",
+  "q": "Which class runs on Sunday?",
+  "expect": "Long Ride",
+  "reply": "On Sunday, the only class available is **Sunday Long Ride** at **11:00am–12:00pm** at the Bahria spin studio, taught by Zeeshan Haider (intermediate level).\n\nSources: policy_guest.md, classes_functional_zor_circuit.md, timetable_weekly_by_day.md",
+  "sources": [
+   "policy_guest.md",
+   "classes_functional_zor_circuit.md",
+   "timetable_weekly_by_day.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I bring a guest to G-11 on a weekday evening? Which class runs on Sunday?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.74"
+   ],
+   [
+    "policy_guest.md",
+    "0.609"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.584"
+   ],
+   [
+    "timetable_weekly_by_day.md",
+    "0.528"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "N10",
+  "q": "Who teaches Zumba?",
+  "expect": "Farah",
+  "reply": "Zumba classes are taught by Farah Naz at the F-7 Ladies Floor on Monday and Wednesday at 5:00–6:00pm, and at the Bahria Ladies Wing on Tuesday and Thursday at 4:00–5:00pm.\n\nSources: faq_classes_and_trainers.md, classes_ladies.md, timetable_ramadan.md, trainer_farah_naz.md",
+  "sources": [
+   "faq_classes_and_trainers.md",
+   "classes_ladies.md",
+   "timetable_ramadan.md",
+   "trainer_farah_naz.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Which class runs on Sunday? Who teaches Zumba?",
+  "top": [
+   [
+    "faq_classes_and_trainers.md",
+    "0.676"
+   ],
+   [
+    "classes_ladies.md",
+    "0.592"
+   ],
+   [
+    "timetable_ramadan.md",
+    "0.565"
+   ],
+   [
+    "trainer_farah_naz.md",
+    "0.526"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "N15",
+  "q": "Is there a sauna at Bahria?",
+  "expect": "\\bno\\b|steam|not",
+  "reply": "The only sauna is at F-7. Bahria has steam rooms but no sauna.\n\nSources: facility_steam_sauna.md, branch_bahria_rawalpindi.md, plan_plus.md, ladies_areas_overview.md",
+  "sources": [
+   "facility_steam_sauna.md",
+   "branch_bahria_rawalpindi.md",
+   "plan_plus.md",
+   "ladies_areas_overview.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is there a sauna at Bahria?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.675"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.607"
+   ],
+   [
+    "plan_plus.md",
+    "0.524"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.507"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "N1",
+  "q": "How much is the Plus plan?",
+  "expect": "16,000",
+  "reply": "The Plus plan costs PKR 16,000 per month at Zor Fitness Club, including access to all three branches and all group classes.\n\nSources: facility_steam_sauna.md, plan_plus.md, branch_bahria_rawalpindi.md",
+  "sources": [
+   "facility_steam_sauna.md",
+   "plan_plus.md",
+   "branch_bahria_rawalpindi.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is there a sauna at Bahria? How much is the Plus plan?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.61"
+   ],
+   [
+    "plan_plus.md",
+    "0.609"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.573"
+   ],
+   [
+    "plan_plus.md",
+    "0.558"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 2,
+  "kind": "offtopic",
+  "id": "C4",
+  "q": "Write me a Python function to reverse a string.",
+  "expect": null,
+  "reply": "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer question instead?",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "Write me a Python function to reverse a string.",
+  "top": [
+   [
+    "policy_complaints_and_feedback.md",
+    "0.066"
+   ],
+   [
+    "policy_cancellation.md",
+    "0.065"
+   ],
+   [
+    "policy_dress_code.md",
+    "0.059"
+   ],
+   [
+    "policy_refund.md",
+    "0.051"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "N2",
+  "q": "Can students get a discount?",
+  "expect": "25%",
+  "reply": "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer question instead?",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Write me a Python function to reverse a string. Can students get a discount?",
+  "top": [
+   [
+    "faq_fees_and_payments.md",
+    "0.259"
+   ],
+   [
+    "offer_student.md",
+    "0.24"
+   ],
+   [
+    "discounts_overview.md",
+    "0.228"
+   ],
+   [
+    "plan_standard.md",
+    "0.22"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "N8",
+  "q": "Can I freeze my monthly plan?",
+  "expect": "can.?not|can.?t|not be frozen|\\bno\\b",
+  "reply": "Sure thing! For a student on a 3-month or longer plan, you can get a 30-day free freeze during exams. You need to show your official date sheet. Request it 48 hours ahead at the desk, in the app, or on WhatsApp.\n\nSources: policy_freeze.md, offer_student.md, pricing_prepaid_plans.md",
+  "sources": [
+   "policy_freeze.md",
+   "offer_student.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "Can students get a discount? Can I freeze my monthly plan?",
+  "top": [
+   [
+    "policy_freeze.md",
+    "0.674"
+   ],
+   [
+    "offer_student.md",
+    "0.671"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.614"
+   ],
+   [
+    "offer_student.md",
+    "0.592"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "N3",
+  "q": "What is the guest fee?",
+  "expect": "1,000",
+  "reply": "The guest fee is PKR 500 per visit. Would you like to book a class now?\n\nSources: pricing_prepaid_plans.md, faq_freeze_refund_cancel.md, policy_freeze.md, policy_cancellation.md",
+  "sources": [
+   "pricing_prepaid_plans.md",
+   "faq_freeze_refund_cancel.md",
+   "policy_freeze.md",
+   "policy_cancellation.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "Can I freeze my monthly plan? What is the guest fee?",
+  "top": [
+   [
+    "pricing_prepaid_plans.md",
+    "0.643"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.618"
+   ],
+   [
+    "policy_freeze.md",
+    "0.577"
+   ],
+   [
+    "policy_cancellation.md",
+    "0.533"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "T11",
+  "q": "Can I wear shalwar kameez in the gym?",
+  "expect": "yoga|pilates|not allowed",
+  "reply": "Shalwar kameez is allowed in the yoga and Pilates studio classes at Zor Fitness Club. Would you like to know more about those classes?\n\nSources: policy_dress_code.md, trainer_mahnoor_rizvi.md, classes_ladies.md, classes_functional_zor_circuit.md",
+  "sources": [
+   "policy_dress_code.md",
+   "trainer_mahnoor_rizvi.md",
+   "classes_ladies.md",
+   "classes_functional_zor_circuit.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I wear shalwar kameez in the gym?",
+  "top": [
+   [
+    "policy_dress_code.md",
+    "0.721"
+   ],
+   [
+    "trainer_mahnoor_rizvi.md",
+    "0.586"
+   ],
+   [
+    "classes_ladies.md",
+    "0.548"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.499"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "N14",
+  "q": "Do you accept JazzCash?",
+  "expect": "\\byes\\b|accept|JazzCash",
+  "reply": "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer question instead?\n\nSources: policy_dress_code.md, classes_ladies.md, classes_functional_zor_circuit.md, trainer_mahnoor_rizvi.md",
+  "sources": [
+   "policy_dress_code.md",
+   "classes_ladies.md",
+   "classes_functional_zor_circuit.md",
+   "trainer_mahnoor_rizvi.md"
+  ],
+  "refused": true,
+  "correct": false,
+  "embedded": "Can I wear shalwar kameez in the gym? Do you accept JazzCash?",
+  "top": [
+   [
+    "policy_dress_code.md",
+    "0.65"
+   ],
+   [
+    "classes_ladies.md",
+    "0.505"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.5"
+   ],
+   [
+    "trainer_mahnoor_rizvi.md",
+    "0.477"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "T19",
+  "q": "What should I eat before a morning workout?",
+  "expect": "banana|date|oat",
+  "reply": "For an early-morning workout, you can have a small meal with carbs and a little protein about 1-2 hours before training. For example, a roti with an egg or a small bowl of daal. Would you like to know more about this or book a class?\n\nSource: nutrition_pre_post_workout.md",
+  "sources": [
+   "nutrition_pre_post_workout.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "What should I eat before a morning workout?",
+  "top": [
+   [
+    "nutrition_pre_post_workout.md",
+    "0.692"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.687"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.605"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.585"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 9,
+  "kind": "bjj",
+  "id": "C1",
+  "q": "Do you offer Brazilian jiu-jitsu or MMA classes?",
+  "expect": null,
+  "reply": "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer question instead?\n\nSources: faq_classes_and_trainers.md, timetable_weekly_by_day.md, classes_ladies.md",
+  "sources": [
+   "faq_classes_and_trainers.md",
+   "timetable_weekly_by_day.md",
+   "classes_ladies.md"
+  ],
+  "refused": true,
+  "correct": true,
+  "embedded": "Do you offer Brazilian jiu-jitsu or MMA classes?",
+  "top": [
+   [
+    "faq_classes_and_trainers.md",
+    "0.52"
+   ],
+   [
+    "timetable_weekly_by_day.md",
+    "0.499"
+   ],
+   [
+    "classes_ladies.md",
+    "0.478"
+   ],
+   [
+    "classes_strength.md",
+    "0.473"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 0,
+  "kind": "smalltalk",
+  "id": "C5",
+  "q": "hi",
+  "expect": null,
+  "reply": "That's a bit outside my department here at Zor Fitness Club -- but ask me about classes, memberships, or trainers and I'm all yours!",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "hi",
+  "top": [
+   [
+    "trainer_hira_saleem.md",
+    "0.3"
+   ],
+   [
+    "trainer_hira_saleem.md",
+    "0.241"
+   ],
+   [
+    "trainer_hira_saleem.md",
+    "0.24"
+   ],
+   [
+    "about_and_contact.md",
+    "0.212"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T15",
+  "q": "Can I get a refund if I move to Karachi?",
+  "expect": "50 ?km|relocat|10%",
+  "reply": "Our documents don't cover that -- please contact the front desk on WhatsApp for assistance.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Can I get a refund if I move to Karachi?",
+  "top": [
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.66"
+   ],
+   [
+    "policy_refund.md",
+    "0.63"
+   ],
+   [
+    "admission_fee.md",
+    "0.451"
+   ],
+   [
+    "policy_refund.md",
+    "0.401"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "N7",
+  "q": "What is the price of the Platinum plan?",
+  "expect": "Standard|Elite|Ladies Only|no Platinum|not have a Platinum|don.?t have a Platinum|doesn.?t have a Platinum",
+  "reply": "The Platinum plan is not listed in our current sources. Please contact the front desk on WhatsApp for the latest pricing information.\n\nSources: plan_comparison.md, pricing_prepaid_plans.md",
+  "sources": [
+   "plan_comparison.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "What is the price of the Platinum plan?",
+  "top": [
+   [
+    "plan_comparison.md",
+    "0.457"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.452"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.443"
+   ],
+   [
+    "plan_plus.md",
+    "0.438"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "T20",
+  "q": "What is the Azadi offer?",
+  "expect": "tracksuit|13 months|extra month",
+  "reply": "The Azadi Offer is a special promotion where you can buy any 12-month plan between 1 and 14 August and get an extra month free, making it 13 months for the price of 12. It also includes a free green Zor tracksuit.\n\nSource: offer_azadi.md",
+  "sources": [
+   "offer_azadi.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the price of the Platinum plan? What is the Azadi offer?",
+  "top": [
+   [
+    "offer_azadi.md",
+    "0.658"
+   ],
+   [
+    "offer_azadi.md",
+    "0.564"
+   ],
+   [
+    "offer_azadi.md",
+    "0.535"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.516"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "T14",
+  "q": "How much do personal training packages cost?",
+  "expect": "18,000",
+  "reply": "Personal Training packages cost PKR 18,000 for 8 sessions, PKR 25,000 for 12 sessions, and PKR 38,000 for 20 sessions. The price is the same for every trainer, and packages are valid for 60 days.\n\nSources: personal_training_packages.md, faq_fees_and_payments.md, faq_new_members.md, plan_standard.md",
+  "sources": [
+   "personal_training_packages.md",
+   "faq_fees_and_payments.md",
+   "faq_new_members.md",
+   "plan_standard.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much do personal training packages cost?",
+  "top": [
+   [
+    "personal_training_packages.md",
+    "0.579"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.545"
+   ],
+   [
+    "faq_new_members.md",
+    "0.491"
+   ],
+   [
+    "plan_standard.md",
+    "0.486"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "T13",
+  "q": "Who can use the kids play area and what are the rules?",
+  "expect": "3.{0,4}8|90 minutes|female member",
+  "reply": "The kids play area is available for children of any female member, on any plan, including Standard, Plus, Elite, or Ladies Only. It is free for the children of female members who are training on the F-7 Islamabad Ladies Floor. The area is only available at the F-7 Islamabad branch and is not available at G-11 or Bahria. No photography or filming is allowed in the kids play area.\n\nSources: plan_ladies_only.md, facility_kids_play_area.md, policy_age_and_minors.md",
+  "sources": [
+   "plan_ladies_only.md",
+   "facility_kids_play_area.md",
+   "policy_age_and_minors.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Who can use the kids play area and what are the rules?",
+  "top": [
+   [
+    "plan_ladies_only.md",
+    "0.575"
+   ],
+   [
+    "facility_kids_play_area.md",
+    "0.541"
+   ],
+   [
+    "facility_kids_play_area.md",
+    "0.493"
+   ],
+   [
+    "policy_age_and_minors.md",
+    "0.49"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "T1",
+  "q": "How much is the Plus membership per month?",
+  "expect": "16,000",
+  "reply": "The Plus membership plan costs PKR 16,000 per month at Zor Fitness Club.\n\nSources: plan_plus.md, plan_comparison.md",
+  "sources": [
+   "plan_plus.md",
+   "plan_comparison.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much is the Plus membership per month?",
+  "top": [
+   [
+    "plan_plus.md",
+    "0.574"
+   ],
+   [
+    "plan_plus.md",
+    "0.572"
+   ],
+   [
+    "plan_plus.md",
+    "0.547"
+   ],
+   [
+    "plan_comparison.md",
+    "0.485"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "T16",
+  "q": "What is the student discount and are there any restrictions?",
+  "expect": "25%|4:00|4 ?pm|off-peak",
+  "reply": "The student discount at Zor Fitness Club is applied to the monthly price instead of the prepaid 10/15/25% discount. You can choose between a student discount or a family, corporate, or senior discount, but only one discount applies at a time. The admission fee waiver on 6 and 12-month terms still applies.\n\nSources: offer_student.md, faq_fees_and_payments.md, discounts_overview.md",
+  "sources": [
+   "offer_student.md",
+   "faq_fees_and_payments.md",
+   "discounts_overview.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the student discount and are there any restrictions?",
+  "top": [
+   [
+    "offer_student.md",
+    "0.679"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.607"
+   ],
+   [
+    "discounts_overview.md",
+    "0.597"
+   ],
+   [
+    "offer_student.md",
+    "0.564"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "T4",
+  "q": "Can I freeze my monthly membership while I travel?",
+  "expect": "can.?not|can.?t|not be frozen|no freeze",
+  "reply": "Monthly memberships cannot be frozen. For 3-month, 6-month, and 12-month plans, you can freeze up to 30 days in advance, with a minimum of 7 days allowed.\n\nSources: policy_freeze.md, faq_freeze_refund_cancel.md",
+  "sources": [
+   "policy_freeze.md",
+   "faq_freeze_refund_cancel.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I freeze my monthly membership while I travel?",
+  "top": [
+   [
+    "policy_freeze.md",
+    "0.656"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.626"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.62"
+   ],
+   [
+    "policy_freeze.md",
+    "0.577"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "T7",
+  "q": "What are the ladies timings at the Bahria branch?",
+  "expect": "8:00|8 ?am",
+  "reply": "At the Bahria branch, ladies timings are from 8:00am to 9:00pm, Monday to Saturday. Sunday is closed for ladies.\n\nSources: branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md",
+  "sources": [
+   "branch_bahria_rawalpindi.md",
+   "faq_ladies.md",
+   "hours_all_branches.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What are the ladies timings at the Bahria branch?",
+  "top": [
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.658"
+   ],
+   [
+    "faq_ladies.md",
+    "0.623"
+   ],
+   [
+    "hours_all_branches.md",
+    "0.604"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.549"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "N6",
+  "q": "My friend did a free trial yesterday. Can I bring him as a guest tomorrow?",
+  "expect": "7 days|seven days|\\bno\\b|can.?t|cannot|not",
+  "reply": "I'm sorry, but someone who has used their free trial cannot come back as a member's guest for 7 days after the trial.\n\nSources: policy_guest.md, day_pass_and_free_trial.md, offer_referral.md, faq_freeze_refund_cancel.md",
+  "sources": [
+   "policy_guest.md",
+   "day_pass_and_free_trial.md",
+   "offer_referral.md",
+   "faq_freeze_refund_cancel.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "My friend did a free trial yesterday. Can I bring him as a guest tomorrow?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.427"
+   ],
+   [
+    "day_pass_and_free_trial.md",
+    "0.383"
+   ],
+   [
+    "offer_referral.md",
+    "0.367"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.364"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "N5",
+  "q": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm?",
+  "expect": "\\bno\\b|not available|only|Standard|Plus|4:00|4 ?pm|off-peak",
+  "reply": "Student discounts apply only to Standard or Plus plans during off-peak hours: Monday to Friday, 6:00am–4:00pm. For Elite, the student discount does not apply.\n\nSources: faq_new_members.md, offer_student.md, plan_elite.md",
+  "sources": [
+   "faq_new_members.md",
+   "offer_student.md",
+   "plan_elite.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm?",
+  "top": [
+   [
+    "faq_new_members.md",
+    "0.541"
+   ],
+   [
+    "offer_student.md",
+    "0.517"
+   ],
+   [
+    "plan_elite.md",
+    "0.514"
+   ],
+   [
+    "plan_comparison.md",
+    "0.448"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "N11",
+  "q": "How much is personal training?",
+  "expect": "18,000",
+  "reply": "Personal training sessions are included in the Plus plan, with any Zor trainer. For Elite, it's 4 sessions per month at a cost of PKR 18,000.\n\nSources: faq_new_members.md, plan_elite.md",
+  "sources": [
+   "faq_new_members.md",
+   "plan_elite.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm? How much is personal training?",
+  "top": [
+   [
+    "faq_new_members.md",
+    "0.6"
+   ],
+   [
+    "plan_elite.md",
+    "0.562"
+   ],
+   [
+    "plan_elite.md",
+    "0.51"
+   ],
+   [
+    "offer_student.md",
+    "0.509"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "N9",
+  "q": "What time does the Bahria Ladies Wing close?",
+  "expect": "9:00|9 ?pm",
+  "reply": "The Bahria Ladies Wing closes at 9:00 PM on weekdays.\n\nSources: branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md",
+  "sources": [
+   "branch_bahria_rawalpindi.md",
+   "faq_ladies.md",
+   "hours_all_branches.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What time does the Bahria Ladies Wing close?",
+  "top": [
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.679"
+   ],
+   [
+    "faq_ladies.md",
+    "0.595"
+   ],
+   [
+    "hours_all_branches.md",
+    "0.592"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.584"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "N12",
+  "q": "Is G-11 open on Sunday?",
+  "expect": "closed|not open|\\bno\\b",
+  "reply": "G-11 is closed on Sundays.\n\nSources: hours_all_branches.md, faq_ladies.md, hours_ramadan.md",
+  "sources": [
+   "hours_all_branches.md",
+   "faq_ladies.md",
+   "hours_ramadan.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What time does the Bahria Ladies Wing close? Is G-11 open on Sunday?",
+  "top": [
+   [
+    "hours_all_branches.md",
+    "0.701"
+   ],
+   [
+    "faq_ladies.md",
+    "0.695"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.667"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.648"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "T8",
+  "q": "Is the gym open during Friday prayers?",
+  "expect": "1:00|1 ?pm|2:15",
+  "reply": "No, all Zor Fitness Club branches, including G-11, are closed from 1:00 PM to 2:15 PM every Friday for Jumu'ah prayers.\n\nSources: hours_friday_holidays_loadshedding.md, faq_ramadan_and_holidays.md, facility_equipment_parking_prayer.md, policy_conduct_and_privacy.md",
+  "sources": [
+   "hours_friday_holidays_loadshedding.md",
+   "faq_ramadan_and_holidays.md",
+   "facility_equipment_parking_prayer.md",
+   "policy_conduct_and_privacy.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is the gym open during Friday prayers?",
+  "top": [
+   [
+    "hours_friday_holidays_loadshedding.md",
+    "0.6"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.587"
+   ],
+   [
+    "facility_equipment_parking_prayer.md",
+    "0.523"
+   ],
+   [
+    "policy_conduct_and_privacy.md",
+    "0.506"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "T17",
+  "q": "Gym ki monthly fee kitni hai aur admission fee kitni hai?",
+  "expect": "10,000|16,000|12,000",
+  "reply": "Monthly fee for the Plus plan is PKR 16,000, and admission fee for any plan is PKR 10,000.\n\nSource: faq_roman_urdu_fees_timings.md",
+  "sources": [
+   "faq_roman_urdu_fees_timings.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Gym ki monthly fee kitni hai aur admission fee kitni hai?",
+  "top": [
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.672"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.618"
+   ],
+   [
+    "faq_roman_urdu_policies.md",
+    "0.601"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.599"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "T5",
+  "q": "What happens if I pay my second instalment late?",
+  "expect": "1,500",
+  "reply": "If you pay the second instalment late, a PKR 1,500 late fee is added, and if it remains unpaid for 15 days, your entry is suspended, and those days are not added back to your plan.\n\nSources: instalments_and_late_fee.md, renewal_and_grace_period.md, pricing_prepaid_plans.md",
+  "sources": [
+   "instalments_and_late_fee.md",
+   "renewal_and_grace_period.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What happens if I pay my second instalment late?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.57"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.5"
+   ],
+   [
+    "renewal_and_grace_period.md",
+    "0.408"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.376"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 8,
+  "kind": "lahore",
+  "id": "C2",
+  "q": "Do you have a branch in Lahore or Karachi?",
+  "expect": null,
+  "reply": "Our current branches are in Islamabad. There are no branches in Lahore or Karachi yet.\n\nSources: branch_f7_islamabad.md, facility_equipment_parking_prayer.md, branch_g11_islamabad.md",
+  "sources": [
+   "branch_f7_islamabad.md",
+   "facility_equipment_parking_prayer.md",
+   "branch_g11_islamabad.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Do you have a branch in Lahore or Karachi?",
+  "top": [
+   [
+    "branch_f7_islamabad.md",
+    "0.506"
+   ],
+   [
+    "facility_equipment_parking_prayer.md",
+    "0.5"
+   ],
+   [
+    "branch_f7_islamabad.md",
+    "0.482"
+   ],
+   [
+    "branch_g11_islamabad.md",
+    "0.466"
+   ]
+  ]
+ },
+ {
+  "run": 1,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "T9",
+  "q": "What are the gym timings during Ramadan?",
+  "expect": "9:30|10:00|10 ?am|2:00",
+  "reply": "During Ramadan, the gym timings are as follows:\n- **Men / main floors:** 10:00 AM–3:00 PM and 9:30 PM–2:00 AM.\n- **Ladies:** 11:00 AM–3:00 PM and 9:00 PM–12:00 AM.\nThe night session starts after Taraweeh.\n\nSources: faq_ramadan_and_holidays.md, hours_ramadan.md, timetable_ramadan.md",
+  "sources": [
+   "faq_ramadan_and_holidays.md",
+   "hours_ramadan.md",
+   "timetable_ramadan.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What are the gym timings during Ramadan?",
+  "top": [
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.696"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.694"
+   ],
+   [
+    "timetable_ramadan.md",
+    "0.684"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.673"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "N7",
+  "q": "What is the price of the Platinum plan?",
+  "expect": "Standard|Elite|Ladies Only|no Platinum|not have a Platinum|don.?t have a Platinum|doesn.?t have a Platinum",
+  "reply": "Our documents don't cover that. Please ask the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "What is the price of the Platinum plan?",
+  "top": [
+   [
+    "plan_comparison.md",
+    "0.457"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.452"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.443"
+   ],
+   [
+    "plan_plus.md",
+    "0.438"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T5",
+  "q": "What happens if I pay my second instalment late?",
+  "expect": "1,500",
+  "reply": "If you pay your second instalment late, a PKR 1,500 late fee is added. After 15 days unpaid, entry is suspended, and those days are not added back to your plan.\n\nSources: instalments_and_late_fee.md, renewal_and_grace_period.md, pricing_prepaid_plans.md",
+  "sources": [
+   "instalments_and_late_fee.md",
+   "renewal_and_grace_period.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What happens if I pay my second instalment late?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.57"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.5"
+   ],
+   [
+    "renewal_and_grace_period.md",
+    "0.408"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.376"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 2,
+  "kind": "smalltalk",
+  "id": "C5",
+  "q": "hi",
+  "expect": null,
+  "reply": "Hello! How can I assist you with your fitness journey today at Zor Fitness Club?\n\nSources: instalments_and_late_fee.md, renewal_and_grace_period.md, pricing_prepaid_plans.md",
+  "sources": [
+   "instalments_and_late_fee.md",
+   "renewal_and_grace_period.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What happens if I pay my second instalment late? hi",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.561"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.516"
+   ],
+   [
+    "renewal_and_grace_period.md",
+    "0.397"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.368"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "N8",
+  "q": "Can I freeze my monthly plan?",
+  "expect": "can.?not|can.?t|not be frozen|\\bno\\b",
+  "reply": "Monthly plans cannot be frozen at Zor Fitness Club. Only 3-month, 6-month, and 12-month plans have a freeze allowance. Would you like to know more about our plans?\n\nSources: faq_freeze_refund_cancel.md, policy_freeze.md, pricing_prepaid_plans.md",
+  "sources": [
+   "faq_freeze_refund_cancel.md",
+   "policy_freeze.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "hi Can I freeze my monthly plan?",
+  "top": [
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.669"
+   ],
+   [
+    "policy_freeze.md",
+    "0.642"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.593"
+   ],
+   [
+    "policy_freeze.md",
+    "0.506"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "N15",
+  "q": "Is there a sauna at Bahria?",
+  "expect": "\\bno\\b|steam|not",
+  "reply": "No sauna is available at the Bahria Town Phase 7 branch. All branches have steam rooms instead. Is there anything else I can help you with today?\n\nSources: policy_freeze.md, faq_freeze_refund_cancel.md, class_prenatal_yoga.md, pricing_prepaid_plans.md",
+  "sources": [
+   "policy_freeze.md",
+   "faq_freeze_refund_cancel.md",
+   "class_prenatal_yoga.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I freeze my monthly plan? Is there a sauna at Bahria?",
+  "top": [
+   [
+    "policy_freeze.md",
+    "0.57"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.569"
+   ],
+   [
+    "class_prenatal_yoga.md",
+    "0.525"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.516"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "T16",
+  "q": "What is the student discount and are there any restrictions?",
+  "expect": "25%|4:00|4 ?pm|off-peak",
+  "reply": "The student discount at Zor Fitness Club is 25% off the monthly price. Restrictions include the off-peak hours rule, where students can only enter during Monday to Friday, 6:00am–4:00pm. The admission fee is waived on 6-month and 12-month terms.\n\nSources: offer_student.md, faq_fees_and_payments.md, discounts_overview.md",
+  "sources": [
+   "offer_student.md",
+   "faq_fees_and_payments.md",
+   "discounts_overview.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the student discount and are there any restrictions?",
+  "top": [
+   [
+    "offer_student.md",
+    "0.679"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.607"
+   ],
+   [
+    "discounts_overview.md",
+    "0.597"
+   ],
+   [
+    "offer_student.md",
+    "0.564"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "N10",
+  "q": "Who teaches Zumba?",
+  "expect": "Farah",
+  "reply": "I don't have specific information on who teaches Zumba classes at Zor Fitness Club. I recommend checking our class schedule or contacting the front desk for that information.\n\nSources: faq_classes_and_trainers.md, policy_age_and_minors.md, offer_student.md, classes_ladies.md",
+  "sources": [
+   "faq_classes_and_trainers.md",
+   "policy_age_and_minors.md",
+   "offer_student.md",
+   "classes_ladies.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "What is the student discount and are there any restrictions? Who teaches Zumba?",
+  "top": [
+   [
+    "faq_classes_and_trainers.md",
+    "0.551"
+   ],
+   [
+    "policy_age_and_minors.md",
+    "0.535"
+   ],
+   [
+    "offer_student.md",
+    "0.524"
+   ],
+   [
+    "classes_ladies.md",
+    "0.514"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "T10",
+  "q": "Can I bring a guest to G-11 on a weekday evening?",
+  "expect": "6:00|6 ?pm|no guests|not allowed",
+  "reply": "No, guests are not allowed at G-11 on weekdays from 6:00 to 9:00 pm due to the peak-time rule. Would you like to know about any other class or plan options?\n\nSources: policy_guest.md, classes_functional_zor_circuit.md",
+  "sources": [
+   "policy_guest.md",
+   "classes_functional_zor_circuit.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I bring a guest to G-11 on a weekday evening?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.769"
+   ],
+   [
+    "policy_guest.md",
+    "0.605"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.525"
+   ],
+   [
+    "policy_guest.md",
+    "0.481"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 8,
+  "kind": "bjj",
+  "id": "C1",
+  "q": "Do you offer Brazilian jiu-jitsu or MMA classes?",
+  "expect": null,
+  "reply": "No Brazilian jiu-jitsu or MMA classes are offered at Zor Fitness Club. We have boxing conditioning and HIIT Blast sessions, but they are not Brazilian jiu-jitsu or MMA classes. Is there anything else I can help you with today?\n\nSources: faq_classes_and_trainers.md, timetable_weekly_by_day.md, classes_ladies.md",
+  "sources": [
+   "faq_classes_and_trainers.md",
+   "timetable_weekly_by_day.md",
+   "classes_ladies.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "Do you offer Brazilian jiu-jitsu or MMA classes?",
+  "top": [
+   [
+    "faq_classes_and_trainers.md",
+    "0.52"
+   ],
+   [
+    "timetable_weekly_by_day.md",
+    "0.499"
+   ],
+   [
+    "classes_ladies.md",
+    "0.478"
+   ],
+   [
+    "classes_strength.md",
+    "0.473"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "N12",
+  "q": "Is G-11 open on Sunday?",
+  "expect": "closed|not open|\\bno\\b",
+  "reply": "G-11 is closed on Sundays. All branches are closed for Jumu'ah (Friday) as well. Would you like to know about any other class or plan options?\n\nSources: timetable_weekly_by_day.md, classes_functional_zor_circuit.md, faq_ladies.md",
+  "sources": [
+   "timetable_weekly_by_day.md",
+   "classes_functional_zor_circuit.md",
+   "faq_ladies.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Do you offer Brazilian jiu-jitsu or MMA classes? Is G-11 open on Sunday?",
+  "top": [
+   [
+    "timetable_weekly_by_day.md",
+    "0.561"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.555"
+   ],
+   [
+    "timetable_weekly_by_day.md",
+    "0.552"
+   ],
+   [
+    "faq_ladies.md",
+    "0.534"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "N11",
+  "q": "How much is personal training?",
+  "expect": "18,000",
+  "reply": "For personal training, you can buy a package of 8 sessions for PKR 18,000, 12 sessions for PKR 25,000, or 20 sessions for PKR 38,000. The price is the same for every trainer, and packages are valid for 60 days.\n\nSources: personal_training_packages.md, faq_fees_and_payments.md, plan_standard.md",
+  "sources": [
+   "personal_training_packages.md",
+   "faq_fees_and_payments.md",
+   "plan_standard.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much is personal training?",
+  "top": [
+   [
+    "personal_training_packages.md",
+    "0.55"
+   ],
+   [
+    "personal_training_packages.md",
+    "0.493"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.493"
+   ],
+   [
+    "plan_standard.md",
+    "0.49"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "N6",
+  "q": "My friend did a free trial yesterday. Can I bring him as a guest tomorrow?",
+  "expect": "7 days|seven days|\\bno\\b|can.?t|cannot|not",
+  "reply": "The friend who used your free trial cannot come back as a guest for 7 days after the trial. You can bring your friend as a guest on another day.\n\nSources: policy_guest.md, day_pass_and_free_trial.md, offer_referral.md, faq_freeze_refund_cancel.md",
+  "sources": [
+   "policy_guest.md",
+   "day_pass_and_free_trial.md",
+   "offer_referral.md",
+   "faq_freeze_refund_cancel.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "My friend did a free trial yesterday. Can I bring him as a guest tomorrow?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.427"
+   ],
+   [
+    "day_pass_and_free_trial.md",
+    "0.383"
+   ],
+   [
+    "offer_referral.md",
+    "0.367"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.364"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "T7",
+  "q": "What are the ladies timings at the Bahria branch?",
+  "expect": "8:00|8 ?am",
+  "reply": "At the Bahria branch, the ladies timings are from 8:00am to 9:00pm, Monday to Saturday.\n\nSources: branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md",
+  "sources": [
+   "branch_bahria_rawalpindi.md",
+   "faq_ladies.md",
+   "hours_all_branches.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What are the ladies timings at the Bahria branch?",
+  "top": [
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.658"
+   ],
+   [
+    "faq_ladies.md",
+    "0.623"
+   ],
+   [
+    "hours_all_branches.md",
+    "0.604"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.549"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "N9",
+  "q": "What time does the Bahria Ladies Wing close?",
+  "expect": "9:00|9 ?pm",
+  "reply": "The Bahria Ladies Wing closes at 9:00pm, Monday to Saturday.\n\nSources: branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md",
+  "sources": [
+   "branch_bahria_rawalpindi.md",
+   "faq_ladies.md",
+   "hours_all_branches.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What time does the Bahria Ladies Wing close?",
+  "top": [
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.679"
+   ],
+   [
+    "faq_ladies.md",
+    "0.595"
+   ],
+   [
+    "hours_all_branches.md",
+    "0.592"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.584"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "T8",
+  "q": "Is the gym open during Friday prayers?",
+  "expect": "1:00|1 ?pm|2:15",
+  "reply": "Yes, the gym is closed during Friday prayers from 1:00pm to 2:15pm at all Zor Fitness Club branches, including the Bahria branch.\n\nSources: hours_friday_holidays_loadshedding.md, faq_ramadan_and_holidays.md, facility_equipment_parking_prayer.md, policy_conduct_and_privacy.md",
+  "sources": [
+   "hours_friday_holidays_loadshedding.md",
+   "faq_ramadan_and_holidays.md",
+   "facility_equipment_parking_prayer.md",
+   "policy_conduct_and_privacy.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is the gym open during Friday prayers?",
+  "top": [
+   [
+    "hours_friday_holidays_loadshedding.md",
+    "0.6"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.587"
+   ],
+   [
+    "facility_equipment_parking_prayer.md",
+    "0.523"
+   ],
+   [
+    "policy_conduct_and_privacy.md",
+    "0.506"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "N3",
+  "q": "What is the guest fee?",
+  "expect": "1,000",
+  "reply": "The guest fee is PKR 1,000 per class for Standard members and non-members.\n\nSources: hours_friday_holidays_loadshedding.md, day_pass_and_free_trial.md, faq_new_members.md, plan_elite.md",
+  "sources": [
+   "hours_friday_holidays_loadshedding.md",
+   "day_pass_and_free_trial.md",
+   "faq_new_members.md",
+   "plan_elite.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is the gym open during Friday prayers? What is the guest fee?",
+  "top": [
+   [
+    "hours_friday_holidays_loadshedding.md",
+    "0.548"
+   ],
+   [
+    "day_pass_and_free_trial.md",
+    "0.545"
+   ],
+   [
+    "faq_new_members.md",
+    "0.537"
+   ],
+   [
+    "plan_elite.md",
+    "0.522"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "T1",
+  "q": "How much is the Plus membership per month?",
+  "expect": "16,000",
+  "reply": "The Plus membership plan costs PKR 16,000 per month at Zor Fitness Club.\n\nSources: plan_plus.md, plan_comparison.md",
+  "sources": [
+   "plan_plus.md",
+   "plan_comparison.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much is the Plus membership per month?",
+  "top": [
+   [
+    "plan_plus.md",
+    "0.574"
+   ],
+   [
+    "plan_plus.md",
+    "0.572"
+   ],
+   [
+    "plan_plus.md",
+    "0.547"
+   ],
+   [
+    "plan_comparison.md",
+    "0.485"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "T2",
+  "q": "Why is the Standard plan cheaper at G-11 than at F-7?",
+  "expect": "8,000|compact",
+  "reply": "The Standard plan at G-11 is cheaper because it is a compact branch with fewer facilities, such as no pool, no steam or sauna, and closed on Sundays.\n\nSources: faq_fees_and_payments.md, plan_standard.md, branch_g11_islamabad.md",
+  "sources": [
+   "faq_fees_and_payments.md",
+   "plan_standard.md",
+   "branch_g11_islamabad.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Why is the Standard plan cheaper at G-11 than at F-7?",
+  "top": [
+   [
+    "faq_fees_and_payments.md",
+    "0.519"
+   ],
+   [
+    "plan_standard.md",
+    "0.488"
+   ],
+   [
+    "branch_g11_islamabad.md",
+    "0.476"
+   ],
+   [
+    "plan_comparison.md",
+    "0.466"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "T9",
+  "q": "What are the gym timings during Ramadan?",
+  "expect": "9:30|10:00|10 ?am|2:00",
+  "reply": "During Ramadan, the gym timings are as follows: for men, it's from 10:00am to 3:00pm and 9:30pm to 2:00am. For ladies, it's from 11:00am to 3:00pm and 9:00pm to 12:00am. The night session starts after Taraweeh.\n\nSources: faq_ramadan_and_holidays.md, hours_ramadan.md, timetable_ramadan.md",
+  "sources": [
+   "faq_ramadan_and_holidays.md",
+   "hours_ramadan.md",
+   "timetable_ramadan.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What are the gym timings during Ramadan?",
+  "top": [
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.696"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.694"
+   ],
+   [
+    "timetable_ramadan.md",
+    "0.684"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.673"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "N5",
+  "q": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm?",
+  "expect": "\\bno\\b|not available|only|Standard|Plus|4:00|4 ?pm|off-peak",
+  "reply": "The student discount applies only to Standard and Plus plans, not to the Elite plan.\n\nSources: faq_new_members.md, offer_student.md, plan_elite.md",
+  "sources": [
+   "faq_new_members.md",
+   "offer_student.md",
+   "plan_elite.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm?",
+  "top": [
+   [
+    "faq_new_members.md",
+    "0.541"
+   ],
+   [
+    "offer_student.md",
+    "0.517"
+   ],
+   [
+    "plan_elite.md",
+    "0.514"
+   ],
+   [
+    "plan_comparison.md",
+    "0.448"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "T15",
+  "q": "Can I get a refund if I move to Karachi?",
+  "expect": "50 ?km|relocat|10%",
+  "reply": "Our documents don't cover that. Please contact the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Can I get a refund if I move to Karachi?",
+  "top": [
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.66"
+   ],
+   [
+    "policy_refund.md",
+    "0.63"
+   ],
+   [
+    "admission_fee.md",
+    "0.451"
+   ],
+   [
+    "policy_refund.md",
+    "0.401"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T18",
+  "q": "Which class runs on Sunday?",
+  "expect": "Long Ride",
+  "reply": "Let's find the Sunday classes together. Which branch are you a member of?\n\nSources: faq_freeze_refund_cancel.md, admission_fee.md, policy_refund.md",
+  "sources": [
+   "faq_freeze_refund_cancel.md",
+   "admission_fee.md",
+   "policy_refund.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "Can I get a refund if I move to Karachi? Which class runs on Sunday?",
+  "top": [
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.594"
+   ],
+   [
+    "admission_fee.md",
+    "0.484"
+   ],
+   [
+    "policy_refund.md",
+    "0.457"
+   ],
+   [
+    "policy_refund.md",
+    "0.422"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "T12",
+  "q": "Is there a sauna at the Bahria branch?",
+  "expect": "no sauna|steam|doesn.?t have a sauna|not have a sauna",
+  "reply": "Bahria Town Phase 7 has a steam room but no sauna.\n\nSources: facility_steam_sauna.md, branch_bahria_rawalpindi.md, plan_plus.md, ladies_areas_overview.md",
+  "sources": [
+   "facility_steam_sauna.md",
+   "branch_bahria_rawalpindi.md",
+   "plan_plus.md",
+   "ladies_areas_overview.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is there a sauna at the Bahria branch?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.691"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.606"
+   ],
+   [
+    "plan_plus.md",
+    "0.518"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.486"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "N14",
+  "q": "Do you accept JazzCash?",
+  "expect": "\\byes\\b|accept|JazzCash",
+  "reply": "Yes, JazzCash is accepted at Zor Café. Would you like to know more about our facilities there?\n\nSources: facility_steam_sauna.md, branch_bahria_rawalpindi.md, plan_plus.md, faq_ramadan_and_holidays.md",
+  "sources": [
+   "facility_steam_sauna.md",
+   "branch_bahria_rawalpindi.md",
+   "plan_plus.md",
+   "faq_ramadan_and_holidays.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is there a sauna at the Bahria branch? Do you accept JazzCash?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.62"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.606"
+   ],
+   [
+    "plan_plus.md",
+    "0.53"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.491"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 4,
+  "kind": "lahore",
+  "id": "C2",
+  "q": "Do you have a branch in Lahore or Karachi?",
+  "expect": null,
+  "reply": "Our gym branches are in Islamabad. Are you interested in a specific branch or facility?\n\nSources: branch_f7_islamabad.md, facility_equipment_parking_prayer.md, branch_g11_islamabad.md",
+  "sources": [
+   "branch_f7_islamabad.md",
+   "facility_equipment_parking_prayer.md",
+   "branch_g11_islamabad.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Do you have a branch in Lahore or Karachi?",
+  "top": [
+   [
+    "branch_f7_islamabad.md",
+    "0.506"
+   ],
+   [
+    "facility_equipment_parking_prayer.md",
+    "0.5"
+   ],
+   [
+    "branch_f7_islamabad.md",
+    "0.482"
+   ],
+   [
+    "branch_g11_islamabad.md",
+    "0.466"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "T13",
+  "q": "Who can use the kids play area and what are the rules?",
+  "expect": "3.{0,4}8|90 minutes|female member",
+  "reply": "The kids' play area is available to the children of any female member, on any plan, while their mother is training on the F-7 Islamabad Ladies Floor. It's a free service, but only available at the F-7 Islamabad branch. Would you like to know more about the rules or the schedule?\n\nSources: plan_ladies_only.md, facility_kids_play_area.md, policy_age_and_minors.md",
+  "sources": [
+   "plan_ladies_only.md",
+   "facility_kids_play_area.md",
+   "policy_age_and_minors.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Who can use the kids play area and what are the rules?",
+  "top": [
+   [
+    "plan_ladies_only.md",
+    "0.575"
+   ],
+   [
+    "facility_kids_play_area.md",
+    "0.541"
+   ],
+   [
+    "facility_kids_play_area.md",
+    "0.493"
+   ],
+   [
+    "policy_age_and_minors.md",
+    "0.49"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "N1",
+  "q": "How much is the Plus plan?",
+  "expect": "16,000",
+  "reply": "The Plus plan at the F-7 Islamabad branch is PKR 13,600 per month. Would you like to know more about this plan or anything else?\n\nSources: plan_ladies_only.md, offer_couple_and_family.md, facility_kids_play_area.md, policy_age_and_minors.md",
+  "sources": [
+   "plan_ladies_only.md",
+   "offer_couple_and_family.md",
+   "facility_kids_play_area.md",
+   "policy_age_and_minors.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "Who can use the kids play area and what are the rules? How much is the Plus plan?",
+  "top": [
+   [
+    "plan_ladies_only.md",
+    "0.578"
+   ],
+   [
+    "offer_couple_and_family.md",
+    "0.551"
+   ],
+   [
+    "facility_kids_play_area.md",
+    "0.539"
+   ],
+   [
+    "policy_age_and_minors.md",
+    "0.508"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "N13",
+  "q": "What is the late fee for instalments?",
+  "expect": "1,500",
+  "reply": "The late fee for instalments is PKR 1,500. Would you like to know more about instalments or something else?\n\nSources: instalments_and_late_fee.md, pricing_prepaid_plans.md, faq_fees_and_payments.md",
+  "sources": [
+   "instalments_and_late_fee.md",
+   "pricing_prepaid_plans.md",
+   "faq_fees_and_payments.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the late fee for instalments?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.624"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.603"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.468"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.407"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 8,
+  "kind": "offtopic",
+  "id": "C3",
+  "q": "Who won the cricket World Cup?",
+  "expect": null,
+  "reply": "That's a bit outside my department here at Zor Fitness Club -- but ask me about classes, memberships, or trainers and I'm all yours!",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "What is the late fee for instalments? Who won the cricket World Cup?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.435"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.401"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.336"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.308"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "N2",
+  "q": "Can students get a discount?",
+  "expect": "25%",
+  "reply": "That's a bit outside my department here at Zor Fitness Club -- but ask me about classes, memberships, or trainers and I'm all yours!",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Who won the cricket World Cup? Can students get a discount?",
+  "top": [
+   [
+    "offer_student.md",
+    "0.326"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.32"
+   ],
+   [
+    "discounts_overview.md",
+    "0.319"
+   ],
+   [
+    "offer_student.md",
+    "0.318"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "T19",
+  "q": "What should I eat before a morning workout?",
+  "expect": "banana|date|oat",
+  "reply": "For an early-morning workout, a banana or a few dates and water is usually enough. Would you like to book a class today?\n\nSource: nutrition_pre_post_workout.md",
+  "sources": [
+   "nutrition_pre_post_workout.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What should I eat before a morning workout?",
+  "top": [
+   [
+    "nutrition_pre_post_workout.md",
+    "0.692"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.687"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.605"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.585"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T3",
+  "q": "Is the admission fee waived if I pay for 6 months?",
+  "expect": "waiv|no admission",
+  "reply": "Our documents don't cover that. Please contact the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Is the admission fee waived if I pay for 6 months?",
+  "top": [
+   [
+    "admission_fee.md",
+    "0.587"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.551"
+   ],
+   [
+    "policy_refund.md",
+    "0.544"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.537"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "T14",
+  "q": "How much do personal training packages cost?",
+  "expect": "18,000",
+  "reply": "Personal training packages cost PKR 18,000 for 8 sessions, PKR 25,000 for 12 sessions, and PKR 38,000 for 20 sessions.\n\nSources: personal_training_packages.md, faq_fees_and_payments.md, faq_new_members.md, plan_standard.md",
+  "sources": [
+   "personal_training_packages.md",
+   "faq_fees_and_payments.md",
+   "faq_new_members.md",
+   "plan_standard.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much do personal training packages cost?",
+  "top": [
+   [
+    "personal_training_packages.md",
+    "0.579"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.545"
+   ],
+   [
+    "faq_new_members.md",
+    "0.491"
+   ],
+   [
+    "plan_standard.md",
+    "0.486"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "T17",
+  "q": "Gym ki monthly fee kitni hai aur admission fee kitni hai?",
+  "expect": "10,000|16,000|12,000",
+  "reply": "Monthly fee for the Standard plan is PKR 12,000 at F-7 and G-11, and PKR 8,000 at Bahria Town. Admission fee is PKR 10,000 for any 6 or 12-month plan. Would you like to book a class today?\n\nSource: faq_roman_urdu_fees_timings.md",
+  "sources": [
+   "faq_roman_urdu_fees_timings.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Gym ki monthly fee kitni hai aur admission fee kitni hai?",
+  "top": [
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.672"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.618"
+   ],
+   [
+    "faq_roman_urdu_policies.md",
+    "0.601"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.599"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "T20",
+  "q": "What is the Azadi offer?",
+  "expect": "tracksuit|13 months|extra month",
+  "reply": "Our documents don't cover that. Please contact the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Gym ki monthly fee kitni hai aur admission fee kitni hai? What is the Azadi offer?",
+  "top": [
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.678"
+   ],
+   [
+    "plan_plus.md",
+    "0.614"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.595"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.591"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "T11",
+  "q": "Can I wear shalwar kameez in the gym?",
+  "expect": "yoga|pilates|not allowed",
+  "reply": "Shalwar kameez is allowed in the yoga and Pilates studio classes at F-7, G-11, and Bahria Town. It's also allowed in the Ladies Wing and Ladies Floor for ladies-only classes. Would you like to book a class today?\n\nSources: policy_dress_code.md, trainer_mahnoor_rizvi.md, classes_ladies.md, classes_functional_zor_circuit.md",
+  "sources": [
+   "policy_dress_code.md",
+   "trainer_mahnoor_rizvi.md",
+   "classes_ladies.md",
+   "classes_functional_zor_circuit.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I wear shalwar kameez in the gym?",
+  "top": [
+   [
+    "policy_dress_code.md",
+    "0.721"
+   ],
+   [
+    "trainer_mahnoor_rizvi.md",
+    "0.586"
+   ],
+   [
+    "classes_ladies.md",
+    "0.548"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.499"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "N4",
+  "q": "Is there a pool at F-7?",
+  "expect": "20 ?m|heated|yes",
+  "reply": "Yes, the F-7 branch has a pool. Would you like to book a class today?\n\nSources: policy_dress_code.md, faq_ladies.md, classes_ladies.md",
+  "sources": [
+   "policy_dress_code.md",
+   "faq_ladies.md",
+   "classes_ladies.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I wear shalwar kameez in the gym? Is there a pool at F-7?",
+  "top": [
+   [
+    "policy_dress_code.md",
+    "0.646"
+   ],
+   [
+    "policy_dress_code.md",
+    "0.625"
+   ],
+   [
+    "faq_ladies.md",
+    "0.581"
+   ],
+   [
+    "classes_ladies.md",
+    "0.556"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 7,
+  "kind": "offtopic",
+  "id": "C4",
+  "q": "Write me a Python function to reverse a string.",
+  "expect": null,
+  "reply": "I'm just the Zor Fitness Club front-desk assistant, so that one's outside my wheelhouse! Can I help you with a class, plan, or trainer question instead?",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "Write me a Python function to reverse a string.",
+  "top": [
+   [
+    "policy_complaints_and_feedback.md",
+    "0.066"
+   ],
+   [
+    "policy_cancellation.md",
+    "0.065"
+   ],
+   [
+    "policy_dress_code.md",
+    "0.059"
+   ],
+   [
+    "policy_refund.md",
+    "0.051"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "T6",
+  "q": "Who teaches the Ladies Strength and PCOS Program and when is it?",
+  "expect": "Sana",
+  "reply": "The Ladies Strength and PCOS Program is taught by Sana Iftikhar, and it runs on Monday, Wednesday, and Friday at 11:00 AM at the F-7 Ladies Floor. Would you like to book a class today?\n\nSources: classes_ladies.md, faq_ladies.md, plan_ladies_only.md, trainer_sana_iftikhar.md",
+  "sources": [
+   "classes_ladies.md",
+   "faq_ladies.md",
+   "plan_ladies_only.md",
+   "trainer_sana_iftikhar.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Who teaches the Ladies Strength and PCOS Program and when is it?",
+  "top": [
+   [
+    "classes_ladies.md",
+    "0.724"
+   ],
+   [
+    "faq_ladies.md",
+    "0.618"
+   ],
+   [
+    "plan_ladies_only.md",
+    "0.574"
+   ],
+   [
+    "trainer_sana_iftikhar.md",
+    "0.56"
+   ]
+  ]
+ },
+ {
+  "run": 2,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "T4",
+  "q": "Can I freeze my monthly membership while I travel?",
+  "expect": "can.?not|can.?t|not be frozen|no freeze",
+  "reply": "Monthly memberships cannot be frozen. For other plans, you can freeze up to 2 times with a minimum of 7 days' notice. Would you like to hear about any of our classes instead?\n\nSources: policy_freeze.md, faq_freeze_refund_cancel.md",
+  "sources": [
+   "policy_freeze.md",
+   "faq_freeze_refund_cancel.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I freeze my monthly membership while I travel?",
+  "top": [
+   [
+    "policy_freeze.md",
+    "0.656"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.626"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.62"
+   ],
+   [
+    "policy_freeze.md",
+    "0.577"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "T6",
+  "q": "Who teaches the Ladies Strength and PCOS Program and when is it?",
+  "expect": "Sana",
+  "reply": "The Ladies Strength and PCOS Program is taught by Sana Iftikhar, and it runs on Mondays, Wednesdays, and Fridays from 11:00 AM to 12:00 PM at the F-7 Ladies Floor.\n\nSources: classes_ladies.md, faq_ladies.md, plan_ladies_only.md, trainer_sana_iftikhar.md",
+  "sources": [
+   "classes_ladies.md",
+   "faq_ladies.md",
+   "plan_ladies_only.md",
+   "trainer_sana_iftikhar.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Who teaches the Ladies Strength and PCOS Program and when is it?",
+  "top": [
+   [
+    "classes_ladies.md",
+    "0.724"
+   ],
+   [
+    "faq_ladies.md",
+    "0.618"
+   ],
+   [
+    "plan_ladies_only.md",
+    "0.574"
+   ],
+   [
+    "trainer_sana_iftikhar.md",
+    "0.56"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T15",
+  "q": "Can I get a refund if I move to Karachi?",
+  "expect": "50 ?km|relocat|10%",
+  "reply": "For a relocation refund, you need to be moving more than 50 km from all Zor branches, such as from Islamabad to Karachi. You will need to provide proof of your new address, like a utility bill or an employer's transfer letter. The refund amount is the pro-rata value of the unused full months, minus a 10% processing fee. Please bring all necessary documents to the front desk at your nearest branch or contact us via WhatsApp on 0333-5550967.\n\nSources: faq_freeze_refund_cancel.md, policy_refund.md, admission_fee.md",
+  "sources": [
+   "faq_freeze_refund_cancel.md",
+   "policy_refund.md",
+   "admission_fee.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I get a refund if I move to Karachi?",
+  "top": [
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.66"
+   ],
+   [
+    "policy_refund.md",
+    "0.63"
+   ],
+   [
+    "admission_fee.md",
+    "0.451"
+   ],
+   [
+    "policy_refund.md",
+    "0.401"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "T19",
+  "q": "What should I eat before a morning workout?",
+  "expect": "banana|date|oat",
+  "reply": "For an early-morning workout, you can have a light meal about 1-2 hours before training. Here are some options:\n\n- A roti with an egg or a small bowl of daal\n- Oats (daliya) with milk and a banana\n- Dahi with fruit\n- A chicken or egg sandwich on whole-wheat bread\n\nIf you prefer a quick option, you can also have:\n- A banana\n- 2-3 dates\n- A banana-date shake from the Zor Juice Bar or Café (PKR 550)\n- A cup of black coffee (PKR 350 at the Juice Bar or Café) if you like a caffeine boost, keeping sugar low.\n\nRemember to hydrate with water before your workout.\n\nSource: nutrition_pre_post_workout.md",
+  "sources": [
+   "nutrition_pre_post_workout.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What should I eat before a morning workout?",
+  "top": [
+   [
+    "nutrition_pre_post_workout.md",
+    "0.692"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.687"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.605"
+   ],
+   [
+    "nutrition_pre_post_workout.md",
+    "0.585"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "T4",
+  "q": "Can I freeze my monthly membership while I travel?",
+  "expect": "can.?not|can.?t|not be frozen|no freeze",
+  "reply": "Monthly plans cannot be frozen at Zor Fitness Club. If you need to travel, you should just not renew your monthly plan and wait to rejoin within 60 days.\n\nSources: policy_freeze.md, faq_freeze_refund_cancel.md",
+  "sources": [
+   "policy_freeze.md",
+   "faq_freeze_refund_cancel.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I freeze my monthly membership while I travel?",
+  "top": [
+   [
+    "policy_freeze.md",
+    "0.656"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.626"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.62"
+   ],
+   [
+    "policy_freeze.md",
+    "0.577"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "N7",
+  "q": "What is the price of the Platinum plan?",
+  "expect": "Standard|Elite|Ladies Only|no Platinum|not have a Platinum|don.?t have a Platinum|doesn.?t have a Platinum",
+  "reply": "The Platinum plan at Zor Fitness Club is priced at PKR 43,200 for a 3-month commitment.\n\nSources: plan_comparison.md, pricing_prepaid_plans.md",
+  "sources": [
+   "plan_comparison.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "What is the price of the Platinum plan?",
+  "top": [
+   [
+    "plan_comparison.md",
+    "0.457"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.452"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.443"
+   ],
+   [
+    "plan_plus.md",
+    "0.438"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "N12",
+  "q": "Is G-11 open on Sunday?",
+  "expect": "closed|not open|\\bno\\b",
+  "reply": "G-11 Islamabad Branch is closed on Sundays.\n\nSources: branch_g11_islamabad.md, offer_student.md, faq_fees_and_payments.md, policy_guest.md",
+  "sources": [
+   "branch_g11_islamabad.md",
+   "offer_student.md",
+   "faq_fees_and_payments.md",
+   "policy_guest.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the price of the Platinum plan? Is G-11 open on Sunday?",
+  "top": [
+   [
+    "branch_g11_islamabad.md",
+    "0.534"
+   ],
+   [
+    "offer_student.md",
+    "0.524"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.498"
+   ],
+   [
+    "policy_guest.md",
+    "0.484"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "N8",
+  "q": "Can I freeze my monthly plan?",
+  "expect": "can.?not|can.?t|not be frozen|\\bno\\b",
+  "reply": "Monthly plans cannot be frozen at Zor Fitness Club.\n\nSources: policy_guest.md, offer_student.md, classes_functional_zor_circuit.md, policy_freeze.md",
+  "sources": [
+   "policy_guest.md",
+   "offer_student.md",
+   "classes_functional_zor_circuit.md",
+   "policy_freeze.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is G-11 open on Sunday? Can I freeze my monthly plan?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.601"
+   ],
+   [
+    "offer_student.md",
+    "0.552"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.519"
+   ],
+   [
+    "policy_freeze.md",
+    "0.511"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 7,
+  "kind": "bjj",
+  "id": "C1",
+  "q": "Do you offer Brazilian jiu-jitsu or MMA classes?",
+  "expect": null,
+  "reply": "No Brazilian jiu-jitsu or MMA classes are offered at Zor Fitness Club.\n\nSources: faq_classes_and_trainers.md, timetable_weekly_by_day.md, classes_ladies.md",
+  "sources": [
+   "faq_classes_and_trainers.md",
+   "timetable_weekly_by_day.md",
+   "classes_ladies.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "Do you offer Brazilian jiu-jitsu or MMA classes?",
+  "top": [
+   [
+    "faq_classes_and_trainers.md",
+    "0.52"
+   ],
+   [
+    "timetable_weekly_by_day.md",
+    "0.499"
+   ],
+   [
+    "classes_ladies.md",
+    "0.478"
+   ],
+   [
+    "classes_strength.md",
+    "0.473"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "T14",
+  "q": "How much do personal training packages cost?",
+  "expect": "18,000",
+  "reply": "Personal Training (PT) packages at Zor Fitness Club cost PKR 18,000 for 8 sessions, PKR 25,000 for 12 sessions, and PKR 38,000 for 20 sessions.\n\nSources: personal_training_packages.md, faq_fees_and_payments.md, faq_new_members.md, plan_standard.md",
+  "sources": [
+   "personal_training_packages.md",
+   "faq_fees_and_payments.md",
+   "faq_new_members.md",
+   "plan_standard.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much do personal training packages cost?",
+  "top": [
+   [
+    "personal_training_packages.md",
+    "0.579"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.545"
+   ],
+   [
+    "faq_new_members.md",
+    "0.491"
+   ],
+   [
+    "plan_standard.md",
+    "0.486"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "T10",
+  "q": "Can I bring a guest to G-11 on a weekday evening?",
+  "expect": "6:00|6 ?pm|no guests|not allowed",
+  "reply": "No, guests are not allowed at G-11 on weekdays from 6:00 to 9:00 pm due to the peak-time rule.\n\nSources: policy_guest.md, classes_functional_zor_circuit.md",
+  "sources": [
+   "policy_guest.md",
+   "classes_functional_zor_circuit.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I bring a guest to G-11 on a weekday evening?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.769"
+   ],
+   [
+    "policy_guest.md",
+    "0.605"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.525"
+   ],
+   [
+    "policy_guest.md",
+    "0.481"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "T3",
+  "q": "Is the admission fee waived if I pay for 6 months?",
+  "expect": "waiv|no admission",
+  "reply": "Our documents don't cover that -- please contact the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Is the admission fee waived if I pay for 6 months?",
+  "top": [
+   [
+    "admission_fee.md",
+    "0.587"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.551"
+   ],
+   [
+    "policy_refund.md",
+    "0.544"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.537"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T2",
+  "q": "Why is the Standard plan cheaper at G-11 than at F-7?",
+  "expect": "8,000|compact",
+  "reply": "G-11 is our compact branch with fewer facilities, so the price is lower at PKR 8,000 compared to PKR 12,000 at F-7 or Bahria.\n\nSources: faq_fees_and_payments.md, plan_standard.md, branch_g11_islamabad.md",
+  "sources": [
+   "faq_fees_and_payments.md",
+   "plan_standard.md",
+   "branch_g11_islamabad.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Why is the Standard plan cheaper at G-11 than at F-7?",
+  "top": [
+   [
+    "faq_fees_and_payments.md",
+    "0.519"
+   ],
+   [
+    "plan_standard.md",
+    "0.488"
+   ],
+   [
+    "branch_g11_islamabad.md",
+    "0.476"
+   ],
+   [
+    "plan_comparison.md",
+    "0.466"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "T11",
+  "q": "Can I wear shalwar kameez in the gym?",
+  "expect": "yoga|pilates|not allowed",
+  "reply": "Shalwar kameez is allowed in the yoga and Pilates studio classes at F-7 and Bahria Town Phase 7 Rawalpindi.\n\nSources: policy_dress_code.md, trainer_mahnoor_rizvi.md, classes_ladies.md, classes_functional_zor_circuit.md",
+  "sources": [
+   "policy_dress_code.md",
+   "trainer_mahnoor_rizvi.md",
+   "classes_ladies.md",
+   "classes_functional_zor_circuit.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Can I wear shalwar kameez in the gym?",
+  "top": [
+   [
+    "policy_dress_code.md",
+    "0.721"
+   ],
+   [
+    "trainer_mahnoor_rizvi.md",
+    "0.586"
+   ],
+   [
+    "classes_ladies.md",
+    "0.548"
+   ],
+   [
+    "classes_functional_zor_circuit.md",
+    "0.499"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "N13",
+  "q": "What is the late fee for instalments?",
+  "expect": "1,500",
+  "reply": "The late fee for instalments is PKR 1,500 if payment is more than 7 days late. After 15 days unpaid, entry is suspended and those days are not added back to your plan.\n\nSources: instalments_and_late_fee.md, pricing_prepaid_plans.md, faq_fees_and_payments.md",
+  "sources": [
+   "instalments_and_late_fee.md",
+   "pricing_prepaid_plans.md",
+   "faq_fees_and_payments.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the late fee for instalments?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.624"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.603"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.468"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.407"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "T12",
+  "q": "Is there a sauna at the Bahria branch?",
+  "expect": "no sauna|steam|doesn.?t have a sauna|not have a sauna",
+  "reply": "Bahria Town Phase 7 has a steam room but no sauna.\n\nSources: facility_steam_sauna.md, branch_bahria_rawalpindi.md, plan_plus.md, ladies_areas_overview.md",
+  "sources": [
+   "facility_steam_sauna.md",
+   "branch_bahria_rawalpindi.md",
+   "plan_plus.md",
+   "ladies_areas_overview.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is there a sauna at the Bahria branch?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.691"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.606"
+   ],
+   [
+    "plan_plus.md",
+    "0.518"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.486"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "N2",
+  "q": "Can students get a discount?",
+  "expect": "25%",
+  "reply": "Our documents don't cover student discounts. Please contact the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Is there a sauna at the Bahria branch? Can students get a discount?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.643"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.579"
+   ],
+   [
+    "plan_plus.md",
+    "0.559"
+   ],
+   [
+    "plan_comparison.md",
+    "0.538"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "T17",
+  "q": "Gym ki monthly fee kitni hai aur admission fee kitni hai?",
+  "expect": "10,000|16,000|12,000",
+  "reply": "**Monthly Fee:** Standard plan - F-7 & Bahria: PKR 12,000, G-11: PKR 8,000. Plus plan: PKR 16,000. Elite plan: PKR 26,000. Ladies Only plan: PKR 10,000.\n**Admission Fee:** PKR 10,000 for a 6-month plan, no admission fee for a 12-month plan.\n\nSource: faq_roman_urdu_fees_timings.md",
+  "sources": [
+   "faq_roman_urdu_fees_timings.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Gym ki monthly fee kitni hai aur admission fee kitni hai?",
+  "top": [
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.672"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.618"
+   ],
+   [
+    "faq_roman_urdu_policies.md",
+    "0.601"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.599"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "T20",
+  "q": "What is the Azadi offer?",
+  "expect": "tracksuit|13 months|extra month",
+  "reply": "Our documents don't cover the Azadi offer. Please contact the front desk on WhatsApp for more information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "Gym ki monthly fee kitni hai aur admission fee kitni hai? What is the Azadi offer?",
+  "top": [
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.678"
+   ],
+   [
+    "plan_plus.md",
+    "0.614"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.595"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.591"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "N9",
+  "q": "What time does the Bahria Ladies Wing close?",
+  "expect": "9:00|9 ?pm",
+  "reply": "Bahria Town Phase 7 Ladies Wing closes at 9:00 PM on Mon–Sat.\n\nSources: branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md",
+  "sources": [
+   "branch_bahria_rawalpindi.md",
+   "faq_ladies.md",
+   "hours_all_branches.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What time does the Bahria Ladies Wing close?",
+  "top": [
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.679"
+   ],
+   [
+    "faq_ladies.md",
+    "0.595"
+   ],
+   [
+    "hours_all_branches.md",
+    "0.592"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.584"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "N14",
+  "q": "Do you accept JazzCash?",
+  "expect": "\\byes\\b|accept|JazzCash",
+  "reply": "Our documents don't cover JazzCash acceptance. Please contact the front desk on WhatsApp for this information.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "What time does the Bahria Ladies Wing close? Do you accept JazzCash?",
+  "top": [
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.624"
+   ],
+   [
+    "faq_ladies.md",
+    "0.544"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.543"
+   ],
+   [
+    "hours_all_branches.md",
+    "0.534"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 0,
+  "kind": "answerable",
+  "id": "N1",
+  "q": "How much is the Plus plan?",
+  "expect": "16,000",
+  "reply": "The Plus plan at Zor Fitness Club costs PKR 16,000 per month, which is the same at all three branches: F-7 Islamabad, G-11 Islamabad, and Bahria Town Phase 7 Rawalpindi.\n\nSources: plan_plus.md, pricing_prepaid_plans.md",
+  "sources": [
+   "plan_plus.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much is the Plus plan?",
+  "top": [
+   [
+    "plan_plus.md",
+    "0.586"
+   ],
+   [
+    "plan_plus.md",
+    "0.537"
+   ],
+   [
+    "plan_plus.md",
+    "0.525"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.509"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 1,
+  "kind": "answerable",
+  "id": "T13",
+  "q": "Who can use the kids play area and what are the rules?",
+  "expect": "3.{0,4}8|90 minutes|female member",
+  "reply": "The kids play area is available for children aged 3 to 8 years of any female member, on any plan, while their mother is training on the F-7 Islamabad Ladies Floor. It is free for the children of female members. The area is only available to female members and not to male members, guests, or day-pass holders.\n\nSources: plan_ladies_only.md, facility_kids_play_area.md, policy_age_and_minors.md",
+  "sources": [
+   "plan_ladies_only.md",
+   "facility_kids_play_area.md",
+   "policy_age_and_minors.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Who can use the kids play area and what are the rules?",
+  "top": [
+   [
+    "plan_ladies_only.md",
+    "0.575"
+   ],
+   [
+    "facility_kids_play_area.md",
+    "0.541"
+   ],
+   [
+    "facility_kids_play_area.md",
+    "0.493"
+   ],
+   [
+    "policy_age_and_minors.md",
+    "0.49"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "N6",
+  "q": "My friend did a free trial yesterday. Can I bring him as a guest tomorrow?",
+  "expect": "7 days|seven days|\\bno\\b|can.?t|cannot|not",
+  "reply": "No, your friend cannot come as a guest tomorrow because they used their free trial within the last 7 days. They should bring their friend on a day pass instead.\n\nSources: policy_guest.md, day_pass_and_free_trial.md, offer_referral.md, faq_freeze_refund_cancel.md",
+  "sources": [
+   "policy_guest.md",
+   "day_pass_and_free_trial.md",
+   "offer_referral.md",
+   "faq_freeze_refund_cancel.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "My friend did a free trial yesterday. Can I bring him as a guest tomorrow?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.427"
+   ],
+   [
+    "day_pass_and_free_trial.md",
+    "0.383"
+   ],
+   [
+    "offer_referral.md",
+    "0.367"
+   ],
+   [
+    "faq_freeze_refund_cancel.md",
+    "0.364"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "N5",
+  "q": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm?",
+  "expect": "\\bno\\b|not available|only|Standard|Plus|4:00|4 ?pm|off-peak",
+  "reply": "Student discounts apply only to Standard and Plus plans, not to Elite. You can get a 25% discount on Standard or Plus plans, but it's for off-peak hours only: Monday to Friday, 6:00am–4:00pm.\n\nSources: faq_new_members.md, offer_student.md, plan_elite.md",
+  "sources": [
+   "faq_new_members.md",
+   "offer_student.md",
+   "plan_elite.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm?",
+  "top": [
+   [
+    "faq_new_members.md",
+    "0.541"
+   ],
+   [
+    "offer_student.md",
+    "0.517"
+   ],
+   [
+    "plan_elite.md",
+    "0.514"
+   ],
+   [
+    "plan_comparison.md",
+    "0.448"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "N10",
+  "q": "Who teaches Zumba?",
+  "expect": "Farah",
+  "reply": "Zumba classes at Zor Fitness Club are taught by Usman Tariq at the G-11 branch.\n\nSources: faq_classes_and_trainers.md, faq_new_members.md, classes_ladies.md",
+  "sources": [
+   "faq_classes_and_trainers.md",
+   "faq_new_members.md",
+   "classes_ladies.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "I'm a student. Can I get 25% off the Elite plan if I train at 8pm? Who teaches Zumba?",
+  "top": [
+   [
+    "faq_classes_and_trainers.md",
+    "0.599"
+   ],
+   [
+    "faq_new_members.md",
+    "0.568"
+   ],
+   [
+    "faq_classes_and_trainers.md",
+    "0.529"
+   ],
+   [
+    "classes_ladies.md",
+    "0.517"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 5,
+  "kind": "smalltalk",
+  "id": "C5",
+  "q": "hi",
+  "expect": null,
+  "reply": "Hello! How can I assist you with your fitness journey at Zor Fitness Club?\n\nSources: trainer_farah_naz.md, classes_ladies.md, faq_classes_and_trainers.md",
+  "sources": [
+   "trainer_farah_naz.md",
+   "classes_ladies.md",
+   "faq_classes_and_trainers.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Who teaches Zumba? hi",
+  "top": [
+   [
+    "trainer_farah_naz.md",
+    "0.572"
+   ],
+   [
+    "classes_ladies.md",
+    "0.542"
+   ],
+   [
+    "faq_classes_and_trainers.md",
+    "0.541"
+   ],
+   [
+    "trainer_farah_naz.md",
+    "0.463"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "N3",
+  "q": "What is the guest fee?",
+  "expect": "1,000",
+  "reply": "The guest fee for Zor Fitness Club is PKR 1,000 per visit.\n\nSources: policy_guest.md, faq_roman_urdu_fees_timings.md",
+  "sources": [
+   "policy_guest.md",
+   "faq_roman_urdu_fees_timings.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "hi What is the guest fee?",
+  "top": [
+   [
+    "policy_guest.md",
+    "0.51"
+   ],
+   [
+    "faq_roman_urdu_fees_timings.md",
+    "0.496"
+   ],
+   [
+    "policy_guest.md",
+    "0.479"
+   ],
+   [
+    "policy_guest.md",
+    "0.464"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "T7",
+  "q": "What are the ladies timings at the Bahria branch?",
+  "expect": "8:00|8 ?am",
+  "reply": "At the Bahria branch, ladies timings are from 8:00am to 9:00pm, Monday to Saturday. Sundays are closed for ladies.\n\nSources: branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md",
+  "sources": [
+   "branch_bahria_rawalpindi.md",
+   "faq_ladies.md",
+   "hours_all_branches.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What are the ladies timings at the Bahria branch?",
+  "top": [
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.658"
+   ],
+   [
+    "faq_ladies.md",
+    "0.623"
+   ],
+   [
+    "hours_all_branches.md",
+    "0.604"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.549"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 8,
+  "kind": "answerable",
+  "id": "T8",
+  "q": "Is the gym open during Friday prayers?",
+  "expect": "1:00|1 ?pm|2:15",
+  "reply": "Yes, the gym is closed during Friday prayers (Jumu'ah) from 1:00pm to 2:15pm every Friday.\n\nSources: hours_friday_holidays_loadshedding.md, faq_ramadan_and_holidays.md, facility_equipment_parking_prayer.md, policy_conduct_and_privacy.md",
+  "sources": [
+   "hours_friday_holidays_loadshedding.md",
+   "faq_ramadan_and_holidays.md",
+   "facility_equipment_parking_prayer.md",
+   "policy_conduct_and_privacy.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is the gym open during Friday prayers?",
+  "top": [
+   [
+    "hours_friday_holidays_loadshedding.md",
+    "0.6"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.587"
+   ],
+   [
+    "facility_equipment_parking_prayer.md",
+    "0.523"
+   ],
+   [
+    "policy_conduct_and_privacy.md",
+    "0.506"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "T18",
+  "q": "Which class runs on Sunday?",
+  "expect": "Long Ride",
+  "reply": "On Sunday, the only class available is the **Sunday Long Ride** at the Bahria spin studio, taught by Zeeshan Haider (intermediate level).\n\nSources: faq_ramadan_and_holidays.md, hours_friday_holidays_loadshedding.md, timetable_weekly_by_day.md",
+  "sources": [
+   "faq_ramadan_and_holidays.md",
+   "hours_friday_holidays_loadshedding.md",
+   "timetable_weekly_by_day.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "Is the gym open during Friday prayers? Which class runs on Sunday?",
+  "top": [
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.607"
+   ],
+   [
+    "hours_friday_holidays_loadshedding.md",
+    "0.6"
+   ],
+   [
+    "timetable_weekly_by_day.md",
+    "0.58"
+   ],
+   [
+    "timetable_weekly_by_day.md",
+    "0.553"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 0,
+  "kind": "lahore",
+  "id": "C2",
+  "q": "Do you have a branch in Lahore or Karachi?",
+  "expect": null,
+  "reply": "Our sources don't cover that information. You can ask the front desk on WhatsApp for details.",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "Do you have a branch in Lahore or Karachi?",
+  "top": [
+   [
+    "branch_f7_islamabad.md",
+    "0.506"
+   ],
+   [
+    "facility_equipment_parking_prayer.md",
+    "0.5"
+   ],
+   [
+    "branch_f7_islamabad.md",
+    "0.482"
+   ],
+   [
+    "branch_g11_islamabad.md",
+    "0.466"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 1,
+  "kind": "offtopic",
+  "id": "C4",
+  "q": "Write me a Python function to reverse a string.",
+  "expect": null,
+  "reply": "That's outside what I can help with here at the front desk -- but I'd love to help you find a class or check membership plans! What are you in the mood for?",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "Write me a Python function to reverse a string.",
+  "top": [
+   [
+    "policy_complaints_and_feedback.md",
+    "0.066"
+   ],
+   [
+    "policy_cancellation.md",
+    "0.065"
+   ],
+   [
+    "policy_dress_code.md",
+    "0.059"
+   ],
+   [
+    "policy_refund.md",
+    "0.051"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 2,
+  "kind": "answerable",
+  "id": "T1",
+  "q": "How much is the Plus membership per month?",
+  "expect": "16,000",
+  "reply": "The Plus membership plan costs PKR 16,000 per month. Would you like to know more about this plan?\n\nSources: plan_plus.md, plan_comparison.md",
+  "sources": [
+   "plan_plus.md",
+   "plan_comparison.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "How much is the Plus membership per month?",
+  "top": [
+   [
+    "plan_plus.md",
+    "0.574"
+   ],
+   [
+    "plan_plus.md",
+    "0.572"
+   ],
+   [
+    "plan_plus.md",
+    "0.547"
+   ],
+   [
+    "plan_comparison.md",
+    "0.485"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 3,
+  "kind": "answerable",
+  "id": "T5",
+  "q": "What happens if I pay my second instalment late?",
+  "expect": "1,500",
+  "reply": "If you pay your second instalment for the Plus membership plan late, a PKR 1,500 late fee is added. After 15 days unpaid, entry is suspended, and those days are not added back to your plan. Would you like to know about any other aspects of your membership?\n\nSources: instalments_and_late_fee.md, renewal_and_grace_period.md, pricing_prepaid_plans.md",
+  "sources": [
+   "instalments_and_late_fee.md",
+   "renewal_and_grace_period.md",
+   "pricing_prepaid_plans.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What happens if I pay my second instalment late?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.57"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.5"
+   ],
+   [
+    "renewal_and_grace_period.md",
+    "0.408"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.376"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 4,
+  "kind": "answerable",
+  "id": "N11",
+  "q": "How much is personal training?",
+  "expect": "18,000",
+  "reply": "Our sources don't cover that information. You can ask the front desk on WhatsApp for details.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "What happens if I pay my second instalment late? How much is personal training?",
+  "top": [
+   [
+    "instalments_and_late_fee.md",
+    "0.513"
+   ],
+   [
+    "instalments_and_late_fee.md",
+    "0.503"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.459"
+   ],
+   [
+    "pricing_prepaid_plans.md",
+    "0.435"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 5,
+  "kind": "answerable",
+  "id": "N4",
+  "q": "Is there a pool at F-7?",
+  "expect": "20 ?m|heated|yes",
+  "reply": "At F-7, the pool is included for Elite members and for Ladies Only members' family swim. Otherwise, it costs PKR 1,500 per swim. Would you like to know more about our facilities?\n\nSources: plan_plus.md, policy_age_and_minors.md, policy_dress_code.md, plan_standard.md",
+  "sources": [
+   "plan_plus.md",
+   "policy_age_and_minors.md",
+   "policy_dress_code.md",
+   "plan_standard.md"
+  ],
+  "refused": false,
+  "correct": false,
+  "embedded": "How much is personal training? Is there a pool at F-7?",
+  "top": [
+   [
+    "plan_plus.md",
+    "0.632"
+   ],
+   [
+    "policy_age_and_minors.md",
+    "0.622"
+   ],
+   [
+    "policy_dress_code.md",
+    "0.598"
+   ],
+   [
+    "plan_standard.md",
+    "0.58"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 6,
+  "kind": "answerable",
+  "id": "T9",
+  "q": "What are the gym timings during Ramadan?",
+  "expect": "9:30|10:00|10 ?am|2:00",
+  "reply": "During Ramadan, the gym timings are as follows:\n- For men on main floors: 10:00am–3:00pm and 9:30pm–2:00am.\n- For ladies on F-7 Ladies Floor, Bahria Ladies Wing, and G-11 ladies: 11:00am–3:00pm and 9:00pm–12:00am.\nThe night session starts after taraweeh. Would you like to know more about our Ramadan timings?\n\nSources: faq_ramadan_and_holidays.md, hours_ramadan.md, timetable_ramadan.md",
+  "sources": [
+   "faq_ramadan_and_holidays.md",
+   "hours_ramadan.md",
+   "timetable_ramadan.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What are the gym timings during Ramadan?",
+  "top": [
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.696"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.694"
+   ],
+   [
+    "timetable_ramadan.md",
+    "0.684"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.673"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 7,
+  "kind": "answerable",
+  "id": "N15",
+  "q": "Is there a sauna at Bahria?",
+  "expect": "\\bno\\b|steam|not",
+  "reply": "Our sources don't cover that information. You can ask the front desk on WhatsApp about the facilities at Bahria.",
+  "sources": null,
+  "refused": true,
+  "correct": false,
+  "embedded": "What are the gym timings during Ramadan? Is there a sauna at Bahria?",
+  "top": [
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.709"
+   ],
+   [
+    "hours_ramadan.md",
+    "0.687"
+   ],
+   [
+    "faq_ramadan_and_holidays.md",
+    "0.661"
+   ],
+   [
+    "nutrition_sehri_iftar_tips.md",
+    "0.652"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 8,
+  "kind": "offtopic",
+  "id": "C3",
+  "q": "Who won the cricket World Cup?",
+  "expect": null,
+  "reply": "Our sources don't cover that information. You can ask the front desk on WhatsApp for details.",
+  "sources": null,
+  "refused": true,
+  "correct": true,
+  "embedded": "Is there a sauna at Bahria? Who won the cricket World Cup?",
+  "top": [
+   [
+    "facility_steam_sauna.md",
+    "0.454"
+   ],
+   [
+    "branch_bahria_rawalpindi.md",
+    "0.429"
+   ],
+   [
+    "ladies_areas_overview.md",
+    "0.395"
+   ],
+   [
+    "wellness_summer_heat_hydration.md",
+    "0.357"
+   ]
+  ]
+ },
+ {
+  "run": 3,
+  "pos": 9,
+  "kind": "answerable",
+  "id": "T16",
+  "q": "What is the student discount and are there any restrictions?",
+  "expect": "25%|4:00|4 ?pm|off-peak",
+  "reply": "The student discount at Zor Fitness Club is 25% off the monthly price, instead of the prepaid discount if you buy 3, 6, or 12 months. You don't get both discounts. The off-peak rule applies, and students can only enter during off-peak hours: Monday to Friday, 6:00am–4:00pm. Would you like to know more about our facilities or classes?\n\nSources: offer_student.md, faq_fees_and_payments.md, discounts_overview.md",
+  "sources": [
+   "offer_student.md",
+   "faq_fees_and_payments.md",
+   "discounts_overview.md"
+  ],
+  "refused": false,
+  "correct": true,
+  "embedded": "What is the student discount and are there any restrictions?",
+  "top": [
+   [
+    "offer_student.md",
+    "0.679"
+   ],
+   [
+    "faq_fees_and_payments.md",
+    "0.607"
+   ],
+   [
+    "discounts_overview.md",
+    "0.597"
+   ],
+   [
+    "offer_student.md",
+    "0.564"
+   ]
+  ]
+ }
+]

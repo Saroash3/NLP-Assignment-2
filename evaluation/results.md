@@ -213,3 +213,55 @@ Routing = classifier + retrieval override (top chunk >= 0.45), as in the live ba
 | Do you offer childcare while I work out? | ON_TOPIC | ON_TOPIC | PASS | facility-adjacent, even though not in the current knowledge base |
 
 **Overall: 27/30 (90%)**
+### Off-topic battery run -- 2026-10-02 18:50 UTC
+
+Model: `qwen2.5:3b` via Ollama at `http://localhost:11434`
+
+Routing = classifier + retrieval override (top chunk >= 0.45), as in the live backend.
+
+#### Clearly on-topic: 10/10 (100%)
+
+| Message | Expected | Actual | Result | Note |
+|---|---|---|:---:|---|
+| What classes do you have on Tuesdays? | ON_TOPIC | ON_TOPIC | PASS |  |
+| What's the difference between the Premium and Elite membership plans? | ON_TOPIC | ON_TOPIC | PASS |  |
+| Can you tell me about Sana Iftikhar and what she teaches? | ON_TOPIC | ON_TOPIC | PASS |  |
+| I'd like to book the HIIT Blast class this week | ON_TOPIC | ON_TOPIC | PASS |  |
+| What are your opening hours? | ON_TOPIC | ON_TOPIC | PASS |  |
+| Where is Zor Fitness Club located? | ON_TOPIC | ON_TOPIC | PASS |  |
+| Do you have a swimming pool? | ON_TOPIC | ON_TOPIC | PASS |  |
+| What's your policy on freezing a membership? | ON_TOPIC | ON_TOPIC | PASS |  |
+| Can I bring a guest with me? | ON_TOPIC | ON_TOPIC | PASS |  |
+| I'd like to book a free trial session | ON_TOPIC | ON_TOPIC | PASS |  |
+
+#### Clearly off-topic: 10/10 (100%)
+
+| Message | Expected | Actual | Result | Note |
+|---|---|---|:---:|---|
+| Who is John Cena? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| Who is Taylor Swift? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| When is the next FIFA World Cup? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| What's 45 times 12? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| Write me a JavaScript function to reverse a string | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| What's the capital of Australia? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| Can you recommend a good Italian restaurant nearby? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| What stock should I invest in right now? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| Can you help me with my calculus homework? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+| What's the latest news on the stock market? | OFF_TOPIC | OFF_TOPIC | PASS |  |
+
+#### Ambiguous / borderline (judgment calls -- see notes): 7/10 (70%)
+
+| Message | Expected | Actual | Result | Note |
+|---|---|---|:---:|---|
+| Is the gym open on public holidays? | ON_TOPIC | ON_TOPIC | PASS | hours-adjacent |
+| How's your day going? | ON_TOPIC | OFF_TOPIC | **FAIL** | small talk a warm front-desk persona should engage with briefly |
+| What's the Wi-Fi password? | ON_TOPIC | OFF_TOPIC | **FAIL** | plausible facility-amenity question |
+| Can I leave my bike locked up outside? | ON_TOPIC | OFF_TOPIC | **FAIL** | facility/policy-adjacent |
+| Do you sell protein powder or supplements? | ON_TOPIC | ON_TOPIC | PASS | gym-adjacent retail question |
+| Is Zor Fitness Club hiring right now? | ON_TOPIC | ON_TOPIC | PASS | about the business itself, not an external topic |
+| Can you recommend a good hotel nearby? | OFF_TOPIC | OFF_TOPIC | PASS | asking for an unrelated local recommendation, not gym-related |
+| Can I get a receipt for my last payment? | ON_TOPIC | ON_TOPIC | PASS | billing/policy-adjacent |
+| What's a good pre-workout meal? | ON_TOPIC | ON_TOPIC | PASS | general fitness/nutrition question |
+| Do you offer childcare while I work out? | ON_TOPIC | ON_TOPIC | PASS | facility-adjacent, even though not in the current knowledge base |
+
+**Overall: 27/30 (90%)**

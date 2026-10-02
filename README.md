@@ -219,15 +219,25 @@ contain the answer, say our documents don't cover it."*
 Reproduce the table with `backend/.venv/Scripts/python.exe eval/threshold_scores.py`.
 
 ### 5.2 Follow-up questions
-"and for ladies?" means nothing on its own, since it scored only 0.31–0.36. **Rule:** if the new
-message has **6 words or fewer**, it is embedded together with the previous user message;
-longer messages are embedded alone. Tested on 4 follow-ups and 2 topic switches, this rule got
-6/6. "Always combine" broke a topic switch, and "never combine" scored follow-ups right at the
-threshold.
+"and for ladies?" means nothing on its own, since it scored only 0.31–0.36. **Rule:** a message is
+embedded together with the previous user message **only if it looks like a follow-up**. That means
+it's short (6 words or fewer) **and** it either starts with a connector ("and", "or", "what about",
+"how about", "for", "aur"…) or refers back with a pronoun ("it", "that", "them"…). As a fallback,
+a short message that finds nothing above the threshold on its own is retried once together with
+the previous message (e.g. "ladies?"). Everything else, including short **complete** questions
+like "What is the guest fee?", is embedded alone.
+
+> **Bug found in live use and fixed.** The first version merged *every* message of 6 words or
+> fewer with the previous one. In real mixed sessions, short complete questions got glued to
+> unrelated earlier questions. "Is there a pool at F-7?" after a freeze question retrieved only
+> freeze documents, so the model said "our documents don't cover that". Measured: 50% of merged
+> queries failed, against 12% of the rest. See §9.4 for the full investigation and the before
+> and after numbers.
 
 ### 5.3 Prompt template (the per-turn sources message)
 ```
-[system]     persona + scope rules + conversation stages + grounding rules + 2-line gym identity
+[system]     persona + scope rules + conversation stages + grounding rules + short gym identity
+             (the 3 branches, and the only 4 plans: Standard, Plus, Elite, Ladies Only)
 [user/asst]  history (oldest trimmed first to fit the budget)
 [system]     SOURCES -- excerpts from Zor Fitness Club's documents that best match the member's
              latest message, best match first. Use ONLY these for gym facts.
@@ -235,8 +245,10 @@ threshold.
              Plus Membership Plan > Price
              ...chunk text...
              [Source 2: ...] ...
-             Answer from these sources. Tables: read each row on its own ... If they don't
-             contain the answer, say our documents don't cover that and suggest WhatsApp.
+             Answer directly from these sources, with the specific facts. Tables: read each
+             row on its own ... If a rule rules their case out, answer "No" + the reason. If
+             they name something we don't have, say so and list what we do have. Say our
+             documents don't cover that ONLY if the sources are about something else entirely.
              Don't mention file names -- the source line is added for you.
              (or the NO MATCH note / the RETRIEVAL UNAVAILABLE note, see §8)
 [system]     scope reminder (Assignment 1 "sandwich")
@@ -260,7 +272,9 @@ alone wrongly rejected real gym questions such as *"What are the timings at the 
 (probably "Bahria" reads as a property company) and trainer names. **Override:** if the
 classifier says OFF_TOPIC but the best chunk scores **≥ 0.45**, the question is answered from
 the sources. Every clear off-topic message scored ≤ 0.32, so there is a 0.13 margin. The
-off-topic battery improved while the off-topic catch rate stayed at 100% (§9.2).
+off-topic battery improved while the off-topic catch rate stayed at 100% (§9.2). The classifier's
+ON_TOPIC definition now also lists fees and payment methods (cash, card, JazzCash, Easypaisa),
+after "Do you accept JazzCash?" was wrongly redirected in live testing (§9.4).
 
 ### 5.5 Visible citations in the chat UI (bonus)
 When an answer was grounded, the chat shows the source documents as small chips under the
@@ -474,14 +488,55 @@ expected source is in the top-4 for every answerable question.
 | Ambiguous | 5/10 | 7/10 |
 | Overall | 24/30 (80%) | 27/30 (90%) |
 
+### 9.4 Live multi-turn sessions: the refusal bug, and the before/after numbers
+**Symptom:** in a live chat session, simple questions the documents answer ("How much is the Plus
+plan?", "Can students get a discount?", "What is the guest fee?", "Is there a pool at F-7?") were
+answered with *"Our documents don't cover that"*, one after another, with no chips. The same
+questions had worked when asked one at a time.
+
+**Investigation.** [`eval/live_session_eval.py`](eval/live_session_eval.py) replays realistic
+sessions through the real WebSocket:
+- the 20 answerable test questions plus 15 new realistic ones, several of them "trick" questions
+  whose correct answer is a rule-based **no** (e.g. "I'm a student, can I get 25% off Elite at 8pm?");
+- mixed with controls (BJJ, Lahore, off-topic, small talk);
+- shuffled into sessions of 10 messages, 3 runs with different orders.
+
+It records each reply's refusal or correctness, and joins it with the server log's embedded query,
+scores and files. That showed **three separate causes**:
+
+| # | Root cause | Evidence | Fix |
+|---|---|---|---|
+| 1 | **Follow-up rule merged complete short questions with the previous, unrelated message** | 32/105 queries were merged, and **50%** of them failed vs **12%** of the rest. "Do you accept JazzCash?" after a dress-code question retrieved dress-code files. "How much is the Plus plan?" after a kids'-area question gave the *family* price, PKR 13,600. | Merge only messages that look like follow-ups (§5.2) |
+| 2 | **The prompt's "documents don't cover that" escape hatch** | With an **empty** history and the right source ranked first ("Is the admission fee waived on 6 months?" → `admission_fee.md`), the model still refused 3/3. Nothing told it how to answer when a rule says *no*. | Prompt: answer directly; if a rule excludes the case, say **"No" + the reason**; if they name something we don't have, say so and list what we have; "don't cover" **only** when the sources are about something else |
+| 3 | **Earlier refusals in the history were copied** | With 2 refusals already in the history, "my friend did a free trial, can he come as a guest?" went from answered (2/3) to **refused 3/3** | Refused or redirected exchanges are no longer kept in the model's history (the stage badge still updates) |
+| + | The classifier didn't list **payments** as on-topic | "Do you accept JazzCash?" was redirected 3/3 (retrieval 0.403, just under the 0.45 override) | Payment methods added to the classifier's ON_TOPIC definition (off-topic battery re-run: still **10/10**) |
+| + | An invented "Platinum plan" price | Asked about a plan that doesn't exist, the model sometimes made up a price | The plan names are now in the 2-line gym identity: "Standard, Plus, Elite, Ladies Only, no other plans" |
+
+**Results:** 3 runs × 35 answerable questions = 105 replies, scored by the same rules before and after:
+
+| | Before | After |
+|---|---|---|
+| **Refusals on answerable questions** | **15/105 (14.3%)** | **0/105 (0%)** |
+| **Correct answers** | 82/105 (78.1%) | **104/105 (99.0%)** |
+| Answers with citation chips | 91/105 | 105/105 |
+| BJJ / Lahore / off-topic / small-talk controls | 2/3 · 3/3 · 6/6 · 3/3 | 3/3 · 3/3 · 6/6 · 3/3 |
+| Off-topic battery (classifier) | 10/10 off-topic caught | 10/10 off-topic caught |
+
+The one remaining wrong answer is an invented Platinum price (limitation 14). The raw replies are in
+`eval/live_session_before.json` and `eval/live_session_after_final.json`.
+
+**One visible behaviour change:** questions about things we don't offer now get a grounded "No",
+e.g. *"No -- We don't offer Brazilian Jiu-Jitsu or MMA classes at Zor Fitness Club"* (with the
+class-list documents as chips), instead of "our documents don't cover that". Nothing is invented.
+
 ### 9.3 End-to-end examples (real replies over the WebSocket, final version)
 | Question | Nova | Citation chips (`done.sources`) |
 |---|---|---|
 | How much is the Plus membership per month? | "The Plus membership plan costs PKR 16,000 per month at Zor Fitness Club.<br>Sources: plan_plus.md, plan_comparison.md" | plan_plus.md, plan_comparison.md |
 | What are the timings at the Bahria branch? *(classifier said OFF_TOPIC; override at 0.642)* | "…6:00 AM to midnight on weekdays, and from 10:00 AM to 8:00 PM on Sundays… only the Ladies Wing is closed." | branch_bahria_rawalpindi.md, hours_all_branches.md |
 | → "and for ladies?" *(follow-up)* | "…the Ladies Wing is open from 8:00 AM to 9:00 PM on weekdays, and it is closed on Sundays." | branch_bahria_rawalpindi.md, faq_ladies.md, hours_all_branches.md |
-| Do you offer Brazilian jiu-jitsu or MMA classes? | "Our documents don't cover that. Please ask the front desk on WhatsApp…" | *(none)* |
-| Can I bring a guest to G-11 on a weekday evening? | "No guests are allowed at G-11 on weekdays from 6:00 to 9:00 pm." | policy_guest.md, classes_functional_zor_circuit.md |
+| Do you offer Brazilian jiu-jitsu or MMA classes? | "No -- We don't offer Brazilian Jiu-Jitsu or MMA classes at Zor Fitness Club." | faq_classes_and_trainers.md, timetable_weekly_by_day.md, classes_ladies.md |
+| Can I bring a guest to G-11 on a weekday evening? | "No -- guests are not allowed at G-11 Monday to Friday, 6:00–9:00pm." | policy_guest.md, classes_functional_zor_circuit.md |
 | Do you have a CrossFit box with a rig? | *(off-topic redirect from the classifier)* | *(none)* |
 
 Reproduce with `backend/.venv/Scripts/python.exe eval/e2e_examples.py` while the backend is running.
@@ -519,19 +574,19 @@ Unchanged from Assignment 1, except for **one optional field** on `done` (citati
 ## 11. Testing
 
 ```bash
-cd backend && python -m pytest -q        # 71 tests, about 1 minute, no Ollama needed
+cd backend && python -m pytest -q        # 86 tests, about 1.5 minutes, no Ollama needed
 ```
 | File | What it covers |
 |---|---|
 | `test_conversation_manager.py`, `test_llm_engine.py`, `test_websocket.py` | Assignment 1 (still passing) |
 | `test_rag_index.py` | chunking rules, heading prefix, incremental add, update and delete |
-| `test_rag_prompt.py` | follow-up rule, threshold, source labels, budget (lowest chunk dropped first, oldest history trimmed) |
+| `test_rag_prompt.py` | follow-up rule (complete short questions embedded alone, real follow-ups merged, fallback), refusals kept out of history, "No + reason" prompt rule, threshold, source labels, budget |
 | `test_rag_cache.py` | cache hits, re-index invalidation, cached results returned as copies |
 | `test_streaming_contract.py` | WebSocket events identical to Assignment 1 in all RAG paths; the optional `sources` field only when grounded |
 | `test_failures.py` | all Phase IV failure cases (§8) |
 
 Evaluation scripts (need Ollama running; the WebSocket ones also need the backend):
-`python -m rag.benchmark`, `eval/threshold_scores.py`, `eval/e2e_examples.py`,
+`python -m rag.benchmark`, `eval/threshold_scores.py`, `eval/e2e_examples.py`, `eval/live_session_eval.py`,
 `eval/concurrency_test.py`, `evaluation/off_topic_battery.py`, and `eval/check_consistency.py`
 (which only checks the documents).
 
@@ -555,8 +610,8 @@ Evaluation scripts (need Ollama running; the WebSocket ones also need the backen
    Assignment 1 stage guide ("walk through freezing") wins over the per-turn note. A fixed reply
    whenever retrieval fails would guarantee safety but would also block small talk.
 3. **Gym-related but uncovered questions pass the threshold** (BJJ 0.520 vs the weakest real
-   question 0.519). The grounding prompt handles them ("our documents don't cover that"), but
-   that depends on the model following the instruction.
+   question 0.519). The prompt now makes the model answer with a grounded "No -- we don't offer
+   that" (§9.4). That depends on the model following the instruction (3/3 in testing).
 4. **The classifier still misfires** on small talk and on Wi-Fi or bicycle-parking questions (score
    too low for the override). When retrieval is down, the override can't help at all.
 5. **English embedding model:** Urdu script works only by a thin margin (0.416 vs 0.35). The model
@@ -581,6 +636,9 @@ Evaluation scripts (need Ollama running; the WebSocket ones also need the backen
 13. **The classifier's verdicts shift slightly with `OLLAMA_NUM_PARALLEL`.** With 4 parallel slots,
     *"Do you have a CrossFit box with a rig?"* is redirected as off-topic, where it passed before.
     That's the classifier being non-deterministic under parallel batching, not a retrieval issue.
+14. **Invented details for things that don't exist.** In the live evaluation, 1 of 105 answers
+    gave a made-up price for a non-existent "Platinum" plan, even though the prompt lists the only
+    four plans. Every other answer (104/105) was correct (§9.4).
 
 ---
 
@@ -598,7 +656,7 @@ backend/
     retriever.py           retrieve(query) + LRU caches
     benchmark.py           latency benchmark (python -m rag.benchmark)
     chroma_db/             the vector index (git-ignored; rebuilt by rag.index)
-  tests/                   71 tests
+  tests/                   86 tests
 eval/                      test questions, threshold scores, e2e examples, concurrency test, consistency check
 evaluation/                Assignment 1 off-topic battery (+ results.md with before/after runs)
 frontend/                  React + Vite UI
