@@ -1,9 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
 import { useChatSocket } from "../hooks/useChatSocket";
+import { useVoiceChat } from "../hooks/useVoiceChat";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
 import { StageBadge } from "./StageBadge";
+import { MicButton } from "./MicButton";
+import { VoiceStatus } from "./VoiceStatus";
+import { LatencyPanel } from "./LatencyPanel";
+import { Toaster } from "@/components/ui/sonner";
 
 const SUGGESTIONS = [
   "What classes do you have on Tuesdays?",
@@ -22,13 +28,32 @@ export function ChatWindow({ onExit }: { onExit: () => void }) {
     sendMessage,
     resetSession,
     manualReconnect,
+    send,
+    sendAudio,
+    addListener,
   } = useChatSocket();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Assignment 3: voice mode on the same socket.
+  const socketApi = useMemo(() => ({ send, sendAudio, addListener }), [send, sendAudio, addListener]);
+  const voice = useVoiceChat(socketApi);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, awaitingReply]);
+
+  // Assignment 3: toast when an open connection drops (the banner below stays as before);
+  // the server-side voice session is gone with it, so voice mode switches off.
+  const wasOpen = useRef(false);
+  const { active: voiceActive, stop: stopVoice } = voice;
+  useEffect(() => {
+    if (status === "open") wasOpen.current = true;
+    else if (wasOpen.current) {
+      wasOpen.current = false;
+      toast.error("Connection to Nova lost -- reconnecting…");
+      if (voiceActive) stopVoice();
+    }
+  }, [status, voiceActive, stopVoice]);
 
   const inputDisabled = status !== "open";
   const sendDisabled = inputDisabled || isStreaming || !draft.trim();
@@ -97,7 +122,14 @@ export function ChatWindow({ onExit }: { onExit: () => void }) {
         </AnimatePresence>
       </div>
 
+      {voice.active && <VoiceStatus state={voice.state} partial={voice.partial} />}
+      <LatencyPanel latency={voice.latency} />
       <div className="chat-input-bar">
+        <MicButton
+          active={voice.active}
+          disabled={inputDisabled}
+          onToggle={() => (voice.active ? voice.stop() : void voice.start())}
+        />
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -116,6 +148,7 @@ export function ChatWindow({ onExit }: { onExit: () => void }) {
           Send
         </motion.button>
       </div>
+      <Toaster />
     </div>
   );
 }

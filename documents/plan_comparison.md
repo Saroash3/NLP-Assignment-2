@@ -1,6 +1,6 @@
 # Membership Plan Comparison
 
-Zor Fitness Club's four plans, side by side.
+Zor Fitness Club's four plans, side by side. Standard, Plus and Elite are open to men and women; Ladies Only is for women only.
 
 | Feature | Standard | Plus | Elite | Ladies Only |
 |---|---|---|---|---|
@@ -35,4 +35,4 @@ The PKR 10,000 admission fee applies to 1-month and 3-month plans and is waived 
 - **Prefer women-only spaces?** Ladies Only. If you also want the main floor, choose Standard, Plus or Elite instead, because female members on those plans can use both.
 
 ## Freeze allowance by term
-Monthly plans cannot be frozen. 3-month plans get 7 days, 6-month plans 15 days, and 12-month plans 30 days. This applies to every plan type.
+Monthly plans cannot be frozen. 3-month plans get 7 days, 6-month plans 15 days, and 12-month plans 30 days.

@@ -32,6 +32,7 @@
 | **Elite** | **26,000** (all branches) | Everything in Plus + **4 PT sessions/month** (do **not** roll over) + **1 nutrition consultation/month** with Kamran Baig + **pool** (F-7) + **2 free guest passes/month** + **72h** priority class booking + **1 free towel/visit**. |
 | **Ladies Only** | **10,000** (all branches) | Ladies Floor (F-7), Ladies Wing (Bahria), G-11 ladies hours, **all ladies classes**, ladies steam, **ladies pool session** (F-7). |
 
+- **Who can join:** Standard, Plus and Elite are open to **men and women**. Ladies Only is for women only. Zor is a mixed gym with separate ladies areas/hours, not a ladies-only gym.
 - **Female members on Standard, Plus or Elite** may use **both** the main floor and the Ladies Floor/Wing/ladies hours at the branch(es) their plan covers (Standard = home branch only).
 - **Admission (joining) fee:** **10,000**, one-time. **Waived** on 6/12-month prepaid plans, for corporate members, and with the Ramadan Fit Pass. A family pays only **one** admission fee.
 - **Prepaid discounts:** 3 months **10% off**; 6 months **15% off** + admission waived; 12 months **25% off** + admission waived.

@@ -3,10 +3,28 @@ import type { ChatMessage, ClientEvent, ConnectionStatus, ServerEvent } from "..
 
 const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000/ws/chat";
 const MAX_RECONNECT_ATTEMPTS = 5;
+/** Assignment 3: errors about voice/TTS only -- shown as a toast, never as a chat bubble. */
+const SIDE_ERROR_CODES = new Set(["voice_unavailable", "asr_error", "tts_error", "mic_silent"]);
 
 function uid(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
+
+/** Assignment 3: a stable per-browser id, so workouts/profile survive page reloads. */
+function userId(): string {
+  try {
+    let id = localStorage.getItem("zor_user_id");
+    if (!id) {
+      id = uid();
+      localStorage.setItem("zor_user_id", id);
+    }
+    return id;
+  } catch {
+    return uid(); // storage blocked: still works, just not remembered
+  }
+}
+
+export type ServerEventListener = (event: ServerEvent) => void;
 
 /**
  * Owns the single WebSocket connection to /ws/chat and turns the raw
@@ -28,12 +46,15 @@ export function useChatSocket() {
   const sessionIdRef = useRef<string | null>(null);
   const reconnectAttempts = useRef(0);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Assignment 3: other hooks (voice, latency, toasts) subscribe to the raw event stream.
+  const listenersRef = useRef(new Set<ServerEventListener>());
 
   const connect = useCallback(() => {
     setStatus("connecting");
-    const url = sessionIdRef.current
-      ? `${WS_URL}?session_id=${encodeURIComponent(sessionIdRef.current)}`
-      : WS_URL;
+    // Assignment 3: extended=1 opts in to the new event types; user_id keys per-user data.
+    const params = new URLSearchParams({ extended: "1", user_id: userId() });
+    if (sessionIdRef.current) params.set("session_id", sessionIdRef.current);
+    const url = `${WS_URL}?${params.toString()}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
@@ -58,6 +79,9 @@ export function useChatSocket() {
       } catch {
         return; // ignore anything unparsable -- the server never sends non-JSON
       }
+
+      listenersRef.current.forEach((listener) => listener(data));
+      if (data.type === "error" && SIDE_ERROR_CODES.has(data.code)) return; // a toast, not a bubble
 
       switch (data.type) {
         case "session": {
@@ -112,6 +136,31 @@ export function useChatSocket() {
           ]);
           break;
         }
+        // --- Assignment 3 ---
+        case "tool_call": {
+          // An inline card, placed before the answer that is about to stream.
+          const tool = { id: data.id, name: data.name, arguments: data.arguments, status: "running" as const };
+          setMessages((prev) => [...prev, { id: uid(), role: "assistant", content: "", tool }]);
+          break;
+        }
+        case "tool_result": {
+          const status = data.ok ? ("ok" as const) : ("error" as const);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.tool?.id === data.id ? { ...m, tool: { ...m.tool, status, result: data.result } } : m,
+            ),
+          );
+          break;
+        }
+        case "transcript": {
+          // The final transcript is the user's turn: show it like a typed message.
+          if (data.final) {
+            setAwaitingReply(true);
+            setMessages((prev) => [...prev, { id: uid(), role: "user", content: data.text, spoken: true }]);
+          }
+          break;
+        }
+        // voice_state / audio / audio_end / latency: handled by the listeners (useVoiceChat).
       }
     };
 
@@ -175,7 +224,23 @@ export function useChatSocket() {
     connect();
   }, [connect]);
 
+  // --- Assignment 3 additions ---
+  const addListener = useCallback((listener: ServerEventListener) => {
+    listenersRef.current.add(listener);
+    return () => {
+      listenersRef.current.delete(listener);
+    };
+  }, []);
+
+  /** Raw microphone audio (16 kHz 16-bit PCM) as a binary frame. */
+  const sendAudio = useCallback((chunk: ArrayBuffer) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(chunk);
+  }, []);
+
   return {
+    send,
+    addListener,
+    sendAudio,
     messages,
     status,
     stage,

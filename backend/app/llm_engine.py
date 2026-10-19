@@ -12,6 +12,7 @@ and swappable (llama.cpp or vLLM could sit behind the same interface).
 from __future__ import annotations
 
 import json
+import logging
 import time
 from dataclasses import dataclass
 from typing import Any, AsyncIterator
@@ -77,6 +78,14 @@ class LLMEngine:
         except httpx.HTTPError:
             return False
 
+    async def warm_up(self) -> None:
+        """Assignment 3: a 1-token request at startup so Ollama loads the model before the
+        first real (possibly spoken) turn. Failures are only logged."""
+        try:
+            await self.generate_with_stats([{"role": "user", "content": "hi"}], num_predict=1)
+        except Exception as e:
+            logging.getLogger("zor_assistant").warning("LLM warm-up failed: %s", e)
+
     async def _stream_raw(
         self,
         messages: list[dict[str, str]],
@@ -97,6 +106,9 @@ class LLMEngine:
             "model": self._model,
             "messages": messages,
             "stream": True,
+            # Assignment 3: keep the model in GPU memory for 30 min (Ollama's default is 5) --
+            # reloading it costs ~6 s, which would wreck the voice latency after a pause.
+            "keep_alive": "30m",
             "options": {
                 "temperature": temperature if temperature is not None else self._temperature,
                 "top_p": self._top_p,

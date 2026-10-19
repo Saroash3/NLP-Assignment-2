@@ -22,3 +22,8 @@ backend/rag/chroma_db/
 *.safetensors
 *.gguf
 **/__pycache__/
+backend/models/
+backend/data/workouts.json
+backend/data/profiles.json
+backend/data/*.tmp
+backend/logs/

@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { FileText } from "lucide-react";
 import type { ChatMessage } from "../types";
+import { ToolCallCard } from "./ToolCallCard";
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
+  if (message.tool) return <ToolCallCard tool={message.tool} />; // Assignment 3: inline tool card
   const isUser = message.role === "user";
   const sources = message.sources ?? [];
   return (

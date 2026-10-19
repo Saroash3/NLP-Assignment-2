@@ -1,23 +1,44 @@
-# Zor Fitness Club — Nova Assistant (Assignment 2: RAG)
+# Zor Fitness Club — Nova Assistant (Assignments 1–3: chat, RAG, voice + tools)
 
-Nova is a fully local, streaming AI front-desk assistant for **Zor Fitness Club**, a fictional
-gym with three branches in Islamabad and Rawalpindi. Assignment 1 built the conversational core
-(FastAPI + WebSocket streaming + a local `qwen2.5:3b` via Ollama). **Assignment 2 adds
-Retrieval-Augmented Generation (RAG):** before answering, Nova looks up the most relevant parts
-of 80 gym documents and answers from them, citing the source file.
+Nova is a fully local, streaming AI front-desk assistant and fitness coach for **Zor Fitness
+Club**, a fictional gym with three branches in Islamabad and Rawalpindi. Everything runs on your
+own machine: no cloud APIs and no browser speech APIs.
 
-- **Local and CPU-friendly retrieval:** `all-MiniLM-L6-v2` embeddings on the CPU, Chroma on disk. No cloud APIs.
-- **RAG only:** no tools or agents. One retrieval step per message, nothing else.
-- **WebSocket contract unchanged** from Assignment 1 (proved by an automated test, see §7.4). The
-  only addition is one **optional** `sources` field on `done`, for the visible-citations bonus (§5.5).
-- The Assignment 1 README (use case, conversation stages, model selection) is kept in
-  [docs/ASSIGNMENT1_README.md](docs/ASSIGNMENT1_README.md).
+| Assignment | What it added |
+|---|---|
+| **1** — conversational core | FastAPI + WebSocket token streaming, a local `qwen2.5:3b` via Ollama, conversation memory, stages, an off-topic gate ([docs/ASSIGNMENT1_README.md](docs/ASSIGNMENT1_README.md)) |
+| **2** — RAG | Answers grounded in 80 gym documents (MiniLM embeddings + Chroma), with citations (Part 2, §1–§13 below) |
+| **3** — voice + tools | **Talk to Nova:** mic → Silero VAD → faster-whisper → the *same* chat pipeline → Piper TTS, sentence by sentence. **Three fitness tools** through prompt-based function calling, plus a **CRM memory** bonus (Part 1, A3.1–A3.11 below) |
+
+- **Median ~0.8 s from the end of speech to the first audio**; every turn under 2 s, also with
+  two users at once. See A3.6.
+- **Voice is not a separate system:** a spoken turn calls the same `run_turn()` as a typed one, so
+  it uses the same history, RAG, tools and streaming.
+- **The text WebSocket contract is unchanged:** new event types are only sent to clients that
+  opt in with `?extended=1`. The A1/A2 contract tests pass unmodified.
+- The design log for each stage is in [PROMPTS.md](PROMPTS.md).
 
 ---
 
 ## Contents
 
-1. [Quick start](#1-quick-start)
+**Part 1 — Assignment 3: voice + tools**
+
+- [A3.1 Architecture](#a31-architecture)
+- [A3.2 Model choices](#a32-model-choices)
+- [A3.3 Tools and the orchestrator](#a33-tools-and-the-orchestrator)
+- [A3.4 Voice pipeline](#a34-voice-pipeline)
+- [A3.5 CRM bonus: remembering the member](#a35-crm-bonus-remembering-the-member)
+- [A3.6 Latency benchmarks](#a36-latency-benchmarks)
+- [A3.7 Concurrency](#a37-concurrency)
+- [A3.8 Frontend additions](#a38-frontend-additions)
+- [A3.9 API additions](#a39-api-additions)
+- [A3.10 Tests](#a310-tests)
+- [A3.11 Known limitations (Assignment 3)](#a311-known-limitations-assignment-3)
+
+**Part 2 — Setup, and Assignment 2 (RAG)**
+
+1. [Quick start (setup for all three assignments)](#1-quick-start)
 2. [Architecture](#2-architecture)
 3. [Document collection](#3-document-collection)
 4. [Indexing pipeline: chunking, embeddings, vector store](#4-indexing-pipeline)
@@ -33,11 +54,338 @@ of 80 gym documents and answers from them, citing the source file.
 
 ---
 
+# Part 1 — Assignment 3: voice + tools
+
+## A3.1 Architecture
+
+```mermaid
+flowchart LR
+    subgraph Browser["Browser (React + Vite)"]
+        MIC["useMicrophone<br/>AudioWorklet → 16 kHz PCM"]
+        UI["ChatWindow<br/>+ MicButton, VoiceStatus,<br/>ToolCallCard, LatencyPanel"]
+        PLAY["useAudioPlayer<br/>gap-free sentence queue"]
+    end
+    MIC -- "binary frames (64 ms)" --> WS
+    UI <-- "JSON: message / token / done<br/>+ tool_call, transcript, audio, latency" --> WS["FastAPI /ws/chat<br/>app/main.py"]
+    WS -- "audio frames" --> VS["VoiceSession<br/>Silero VAD (streaming)<br/>faster-whisper (GPU)"]
+    VS -- "final transcript" --> TURN
+    WS -- "typed text" --> TURN["run_turn()<br/>app/turn.py<br/>(same for both)"]
+    TURN -- "in parallel" --> CLS["off-topic classifier"] & RAG["retrieval<br/>MiniLM + Chroma"] & RT["tool router"]
+    CLS & RT --> LLM["Ollama qwen2.5:3b"]
+    RT -- "JSON tool call" --> TOOLS["tools (5 s timeout)<br/>metrics · nutrition ·<br/>workouts · user_profile"]
+    TURN -- "prompt + sources<br/>+ tool result + profile" --> LLM
+    LLM -- "token stream" --> TURN
+    TURN -- "tokens" --> WS
+    TURN -- "tokens (voice turns)" --> SO["SpeechOutput<br/>sentence buffer → Piper TTS"]
+    SO -- "audio events" --> WS --> PLAY
+```
+
+**A typed turn** ([turn.py](backend/app/turn.py)):
+1. Three steps run **at the same time** (`asyncio.gather`): the A1 **off-topic classifier**
+   (LLM), A2 **retrieval** (worker thread), and the new **tool router** (LLM). The CRM profile
+   is read from disk in the same `gather`.
+2. If the router chose a tool, it runs with a 5 s timeout. Its result, as an inline **tool
+   card** in the chat, and the member profile are added to the prompt as system messages.
+3. One streamed LLM generation produces the answer, exactly as in A2 (token events, citations).
+
+**A spoken turn** is the same `run_turn()` call. Before it, `VoiceSession` turns microphone
+frames into a final transcript (VAD end-of-speech + Whisper). During it, every reply token is
+also fed to `SpeechOutput`, which speaks each sentence as soon as it is complete.
+
+## A3.2 Model choices
+
+All measured on the development machine: i9-14900HX, **RTX 4080 Laptop (12 GB)**, 32 GB RAM, Windows 11.
+
+| Role | Model | Why | Measured |
+|---|---|---|---|
+| LLM | **`qwen2.5:3b`** via Ollama (GPU), unchanged from A1/A2 | Fast first token, good instruction-following for its size, and already tuned across two assignments. A 7B model would double the generation time. | First token ~40 ms when the prompt prefix is cached; ~100–270 ms in a real turn |
+| ASR | **faster-whisper `large-v3-turbo`**, forced to English, CUDA float16 (falls back to **`base.en`** CPU int8) + a **vocabulary prompt** (Nova, trainers, branches, plans) | Started as `small.en`; in a live test an accented "Hi Nova" became "Hain Allah" / "Hi Noah". Turbo = large-v3's encoder (much more robust to accents) with a small decoder, so it stays fast. The vocabulary prompt alone halved the word errors. | Word errors on 40 test sentences (clear voices): `small.en` 12–15% → `small.en` + prompt 6–9% → **turbo + prompt 4–8%**. **On the tester's real voice** (21 clips): turbo 97.5% word accuracy vs full `large-v3` 96.3% (and 2× slower); with the name/vocabulary fixes **98.8%, 20/21 sentences exact**. ~165 ms per question on GPU. |
+| VAD | **Silero VAD v6** (ONNX, CPU), the copy bundled with faster-whisper | Far more robust to noise than energy thresholds or webrtcvad; tiny (~1 ms per 32 ms window); nothing extra to download | Runs per 64 ms frame in a worker thread |
+| TTS | **Piper `en_US-lessac-medium`** (ONNX, CPU) | **Piper vs Kokoro:** Piper is ~40× real time on CPU with a 60 MB voice; Kokoro sounds more natural but is several times slower and much heavier. First-audio latency won. | One sentence in **~50–100 ms** |
+| Embeddings | `all-MiniLM-L6-v2` (CPU), unchanged from A2 | See §4.1 | ~15 ms per query |
+
+**Document collection and retrieval** are unchanged from Assignment 2, except two added documents
+(`who_can_join_men_and_women.md`, `hours_for_men.md`; see A3.11): see §3 (the documents and
+how they were made), §4 (chunking, embeddings, Chroma) and §5 (top-k = 4, threshold 0.35,
+citations).
+
+## A3.3 Tools and the orchestrator
+
+### How prompt-based function calling works here ([orchestrator.py](backend/app/orchestrator.py))
+1. **Router call.** A short system prompt lists every tool (name, description, JSON schema of
+   the arguments) and 16 examples. The LLM must reply with **either `NONE` or one JSON object**
+   `{"tool": "...", "arguments": {...}}`. It runs at temperature 0 and **in parallel** with the
+   classifier and retrieval, so it adds almost no wait.
+2. **Detection and validation.** `parse_tool_call()` extracts the JSON (tolerating ``` fences)
+   and rejects unknown tools. `validate_args()` checks types, enums and required fields, accepts
+   `"80"` for 80, and drops invented keys.
+3. **Execution:** `asyncio.wait_for(tool.run(args, ctx), timeout=5 s)`. A timeout, a
+   `ToolError` (e.g. a missing height) or a crash is turned into a short message, never an
+   exception. The `user_id` comes from the server's `ToolContext`, **never from the LLM**, so one
+   member can't read or change another member's data.
+4. **Answer.** The result goes into the normal prompt as a `TOOL RESULT` system message
+   ("these values are FINAL… don't recalculate"), and the usual streaming generation words the
+   answer. In voice mode that answer is spoken.
+
+**Why a separate router call:** with the tool list inside the 1,600-token persona prompt, the 3B
+model made **0 tool calls in 7 tool requests**. It asked for numbers it already had, or refused
+BMI as "math". With a router prompt whose only job is choosing a tool: **7/7 routed correctly,
+0 false positives** on plan, price and off-topic questions. It is still prompt-based function
+calling, just in a prompt small enough for a 3B model. Details in [PROMPTS.md](PROMPTS.md).
+
+### The tools
+
+| Name | Description (as given to the LLM) | Data |
+|---|---|---|
+| `calculate_fitness_metrics` | Calculate BMI, daily calorie needs (maintenance, loss, gain) or an estimated one-rep max from the member's numbers. | BMI + WHO category; Mifflin-St Jeor BMR × activity factor; Epley 1RM (≤ 12 reps) |
+| `lookup_nutrition` | Look up calories, protein, carbs and fat for a common food (optionally for a given number of grams or servings). | [`backend/data/foods.json`](backend/data/foods.json): **42 foods**, per 100 g + a typical serving, incl. roti, daal, chana, dahi; alias + fuzzy matching |
+| `workout_schedule` | Add a workout to the member's weekly schedule, list their scheduled workouts, or delete one (by id or by day). | `backend/data/workouts.json`, keyed by user ID |
+| `user_profile` *(CRM bonus)* | Remember (update) or recall (get) facts about the member across visits: their name, fitness goal, injuries, preferences and last workout. | `backend/data/profiles.json`, keyed by user ID |
+
+**Argument schemas** (JSON Schema, from the code):
+```json
+calculate_fitness_metrics: {"type":"object","required":["metric"],"properties":{
+  "metric":{"type":"string","enum":["bmi","daily_calories","one_rep_max"]},
+  "weight_kg":{"type":"number"}, "height_cm":{"type":"number"}, "age":{"type":"integer"},
+  "sex":{"type":"string","enum":["male","female"]},
+  "activity_level":{"type":"string","enum":["sedentary","light","moderate","active","very_active"]},
+  "lifted_kg":{"type":"number"}, "reps":{"type":"integer"}}}
+
+lookup_nutrition: {"type":"object","required":["food"],"properties":{
+  "food":{"type":"string"}, "grams":{"type":"number"}, "servings":{"type":"number"}}}
+
+workout_schedule: {"type":"object","required":["action"],"properties":{
+  "action":{"type":"string","enum":["add","list","delete"]},
+  "day":{"type":"string"}, "workout":{"type":"string"},
+  "duration_min":{"type":"integer"}, "workout_id":{"type":"integer"}}}
+
+user_profile: {"type":"object","required":["action"],"properties":{
+  "action":{"type":"string","enum":["get","update"]},
+  "name":{"type":"string"}, "fitness_goal":{"type":"string"}, "injuries":{"type":"string"},
+  "preferences":{"type":"string"}, "last_workout":{"type":"string"}}}
+```
+
+### The LLM invoking each tool (real runs)
+| Member says | Router output (the LLM's tool call) | Tool result | Nova's answer |
+|---|---|---|---|
+| 🎤 "What is my BMI if I weigh 80 kilos and I am 180 centimetres tall?" | `{"tool":"calculate_fitness_metrics","arguments":{"metric":"bmi","weight_kg":80,"height_cm":180}}` | `{"bmi":24.7,"category":"normal weight"}` | "Your BMI is 24.7, which falls within the normal weight range." |
+| "I benched 80 kg for 6 reps, what's my one rep max?" | `{"tool":"calculate_fitness_metrics","arguments":{"metric":"one_rep_max","lifted_kg":80,"reps":6}}` | `{"one_rep_max_kg":96.0,"formula":"Epley"}` | "Your one rep max based on that is 96.0 kg." |
+| 🎤 "How much protein is in two eggs?" | `{"tool":"lookup_nutrition","arguments":{"food":"egg","servings":2}}` | `{"food":"egg","portion":"2 x 1 large egg (100 g)","calories":155,"protein_g":13.0,…}` | "Two eggs provide about 13 grams of protein." |
+| "Add leg day on Monday for 60 minutes to my schedule." | `{"tool":"workout_schedule","arguments":{"action":"add","day":"Monday","workout":"leg day","duration_min":60}}` | `{"added":{"id":1,"day":"Monday","workout":"leg day","duration_min":60}}` | "…leg day on Monday for 60 minutes [added] to your schedule." |
+| "My name is Sara and my goal is to build muscle." | `{"tool":"user_profile","arguments":{"action":"update","name":"Sara","fitness_goal":"build muscle"}}` | `{"saved":{…},"profile":{…}}` | "Great to hear that, Sara! Let's focus on a balanced diet with enough protein…" |
+| "How much is the Plus plan?" | `NONE` → normal RAG answer with citations | – | "The Plus plan costs PKR 16,000 per month…" (chips: plan_plus.md, …) |
+
+🎤 = spoken through the voice pipeline. **Errors:** a missing number gives e.g. *"To calculate BMI
+I need: height_cm."*, which Nova turns into a question; an unknown food gives *"'dragon steak' is
+not in my nutrition database."*; a timeout gives *"The tool took too long to respond."*
+
+## A3.4 Voice pipeline
+
+**Input** ([voice_session.py](backend/app/voice/voice_session.py)):
+- The browser's AudioWorklet ([public/mic-processor.js](frontend/public/mic-processor.js))
+  resamples the mic to **16 kHz mono 16-bit PCM** and sends **64 ms binary frames** on the same
+  WebSocket.
+- The server scores each 32 ms window with **streaming Silero VAD**: speech starts at p ≥ 0.5,
+  silence is p < 0.35, end of speech is **0.5 s of silence**, blips under 0.25 s are ignored, and
+  0.3 s of pre-roll is kept.
+- While the member speaks, a **partial transcript** runs every ~0.7 s in the background (live
+  captions). At the end of speech the **final transcript** (Whisper, GPU) becomes a normal user
+  turn, and the browser shows it as a normal user bubble.
+
+**Output** ([speech_output.py](backend/app/voice/speech_output.py),
+[sentence_buffer.py](backend/app/voice/sentence_buffer.py)):
+- LLM tokens are buffered into sentences (`. ! ?`; the **first** chunk may also end at a comma
+  after 40 characters, which gets audio out sooner). Markdown is stripped, and the
+  `Sources:` line is never spoken.
+- Each sentence is synthesized in order by Piper in a TTS thread and sent as an `audio` event
+  (base64 PCM, `seq`) **while the text is still streaming**. The browser schedules each buffer to
+  start exactly when the previous one ends.
+
+**Half-duplex:** the browser only sends mic audio while the server is `listening` and nothing is
+playing, so Nova never transcribes its own voice from the speakers. States shown in the UI:
+`idle → listening → transcribing → thinking → speaking → listening`.
+
+**Failure handling:** voice models missing → `voice_unavailable` toast, and text chat still
+works. ASR error → toast, and listening continues. TTS error → one toast, and the full text reply
+still arrives. Mic permission denied → toast. Connection lost → toast and banner, and voice mode
+switches off. All of these are covered by tests.
+
+## A3.5 CRM bonus: remembering the member
+
+- Each browser gets a stable **user ID** (localStorage), sent as `?user_id=`.
+  [`user_profile.py`](backend/app/tools/user_profile.py) stores, per user ID: name, fitness goal,
+  injuries, preferences, last workout, and the **last 5 interactions**.
+- The **LLM tool** saves and reads facts. **The server**, without the LLM:
+  - adds the profile to every prompt (so Nova uses the name and keeps injuries in mind);
+  - logs each on-topic request;
+  - on a **new session of a returning member**, sends *"Welcome back, Sara! Last time you asked:
+    "How much is the Plus plan?". Want to pick up from there…?"*. The greeting is **spoken once
+    when voice mode starts**.
+- **Voice, live:** after two text visits, a spoken *"What is my name and what is my goal?"* got
+  *"Your name is Sara and your fitness goal is to build muscle."* (738 ms to first audio).
+
+## A3.6 Latency benchmarks
+
+[`benchmarks/voice_benchmark.py`](benchmarks/voice_benchmark.py) speaks each question with Piper,
+streams it to the running server **in real time** (64 ms frames + silence, like a microphone),
+and collects the server's per-turn `latency` event. Full tables:
+[`benchmarks/voice_results.md`](benchmarks/voice_results.md). Times in ms:
+
+| Scenario | ASR | Retrieval + routing | Tool | LLM 1st token | TTS 1st audio | **End of speech → 1st audio** |
+|---|---|---|---|---|---|---|
+| RAG question: "What time does the F-7 branch open?" | 164 | 116 | – | 235 | 127 | **812** |
+| Tool: "How much protein is in two eggs?" | 168 | 289 | 0 | 109 | 79 | **758** |
+| Tool: BMI (long question) | 167 | 364 | 0 | 119 | 56 | **811** |
+| Tool: "Add leg day on Monday…" | 186 | 309 | 1 | 267 | 67 | **932** |
+| RAG: "How much is the Elite plan?" | 132 | 106 | – | 229 | 112 | **757** |
+| **1 voice user, 6 turns** | | | | | | **median 784, max 932** |
+| **1 voice + 1 text user concurrently** (text first token 272–453 ms) | | | | | | **median 840, max 1,028** |
+| **2 voice users concurrently** | | | | | | **median 1,205, max 1,367** |
+
+- **Target met:** ~1 s for one user (median 0.78 s), every turn under the 2 s maximum, and
+  retrieval + tools always under 0.8 s (target < 2 s). All 16 benchmark transcripts were exact.
+- The larger, more accurate speech model costs ~60 ms per turn vs `small.en`; with two people
+  talking at the same moment they share the GPU, so the median rises to ~1.2 s.
+- "End of speech" is when the VAD decides the member stopped, which is **0.6 s after the last
+  word** (the silence hangover). That wait is not included above; it is the price of not cutting
+  people off mid-sentence.
+- Total ≈ ASR + routing + LLM first token + time to the first complete sentence + TTS.
+  **Tool turns route a little slower** (~300–400 ms), because the router has to *write* the JSON
+  call (~40 tokens) rather than just `NONE`.
+- **The biggest fix:** on Windows, `localhost` tries IPv6 first while Ollama listens on IPv4,
+  which cost **~270 ms on every LLM request**. Using `127.0.0.1` cut the classifier from 310 to
+  41 ms and the voice median from **1,318 to 737 ms**. It also speeds up A1/A2 text chat.
+- The latency panel in the UI shows the same numbers for every turn, typed or spoken.
+
+## A3.7 Concurrency
+
+- Nothing heavy runs on the event loop: Whisper (2-thread executor, so two users can be
+  transcribed at once), Piper (1 thread, ~50–100 ms per sentence), VAD, retrieval and JSON
+  stores (`asyncio.to_thread`), and the LLM (async httpx; `OLLAMA_NUM_PARALLEL=4`).
+- **Tested** (A3.6): voice + text and voice + voice at the same time. The text user's first
+  token stays at 310–564 ms while another user talks.
+- The A2 text concurrency test with voice loaded:
+
+  | | 5 clients | 10 clients |
+  |---|---|---|
+  | time to first token (median / max) | **0.43 / 0.77 s** (A2: 0.84 / 1.15) | 1.68 / 2.92 s (A2: 1.34 / 2.65) |
+  | `/session/new` under load | 1 ms | 2 ms |
+
+  It's faster at 5 clients (the `127.0.0.1` fix). It's slightly slower at 10, because each
+  message now makes **3** LLM calls (classifier, router, reply) and the GPU is shared.
+- JSON files are written under a lock with an atomic rename, and 10 concurrent adds lose
+  nothing (test). The same session in two tabs still gets the A1 `busy` error.
+
+## A3.8 Frontend additions
+
+The existing chat UI is **extended, not redesigned**: same layout, components, theme and socket.
+The stack is React 19 + **Vite** + TypeScript + Tailwind v4 + shadcn/ui; the existing app is
+Vite, not Next.js, and it was kept that way. **One new library:** `sonner` (toasts).
+framer-motion and lucide-react were already used.
+
+| New file | What it is |
+|---|---|
+| `public/mic-processor.js` | AudioWorklet: mic → 16 kHz int16, 64 ms chunks |
+| `src/hooks/useMicrophone.ts` | getUserMedia (echo cancellation on) + the worklet |
+| `src/hooks/useAudioPlayer.ts` | gap-free, in-order playback of the sentence audio |
+| `src/hooks/useVoiceChat.ts` | voice mode on top of the existing socket: state, partial transcript, latency, toasts, half-duplex gate |
+| `src/components/MicButton.tsx` | mic toggle next to the input (shadcn `Button`) |
+| `src/components/VoiceStatus.tsx` | idle / listening / transcribing / thinking / speaking + live transcript |
+| `src/components/ToolCallCard.tsx` | inline tool card: name, arguments, spinner → result (shadcn `Card`) |
+| `src/components/LatencyPanel.tsx` | collapsible last-turn latency (the existing shadcn `Accordion`) |
+| `src/components/ui/sonner.tsx` | shadcn Sonner wrapper in the Volt-on-Graphite theme |
+
+| Modified file | Change |
+|---|---|
+| `src/types.ts` | new strictly typed event and message types (additive) |
+| `src/hooks/useChatSocket.ts` | connects with `extended=1&user_id=…`; handles `tool_call`, `tool_result` and the final `transcript`; exposes `addListener`, `sendAudio`, `send` |
+| `src/components/ChatWindow.tsx` | renders MicButton, VoiceStatus, LatencyPanel and the Toaster; adds a connection-lost toast |
+| `src/components/MessageBubble.tsx` | one line: a message with `tool` renders a `ToolCallCard` |
+
+## A3.9 API additions
+
+All additive. A client that sends none of these and doesn't pass `?extended=1` gets exactly the
+A2 protocol (tested).
+
+```jsonc
+// connect: /ws/chat?extended=1&user_id=<stable id>[&session_id=…]
+// client -> server
+{ "type": "voice_start" }  { "type": "voice_stop" }
+<binary frame>  // 16 kHz mono int16 PCM, any length (the browser sends 1024 samples)
+
+// server -> client (extended clients only)
+{ "type": "tool_call",   "id": "a1b2c3d4", "name": "lookup_nutrition", "arguments": {"food": "egg", "servings": 2} }
+{ "type": "tool_result", "id": "a1b2c3d4", "name": "lookup_nutrition", "ok": true, "result": {"protein_g": 13.0, …} }
+{ "type": "voice_state", "state": "idle" | "listening" | "transcribing" | "thinking" | "speaking" }
+{ "type": "transcript",  "text": "How much protein is in two eggs", "final": false }
+{ "type": "audio",       "seq": 0, "sample_rate": 22050, "data": "<base64 int16 PCM>" }
+{ "type": "audio_end" }
+{ "type": "latency", "asr_ms": 93, "retrieval_ms": 287, "tool_ms": 0, "llm_first_token_ms": 124, "tts_first_audio_ms": 60, "total_ms": 654 }
+{ "type": "error", "code": "voice_unavailable" | "asr_error" | "tts_error", "message": "…" }
+```
+A spoken turn's reply still arrives as ordinary `token` / `done` events, so the chat shows the
+text while the audio plays.
+
+## A3.10 Tests
+
+`cd backend && python -m pytest -q`: **120 tests** (87 from A1/A2, all still passing unchanged,
+plus 33 new). No Ollama or speech model is needed: the LLM, ASR, TTS and VAD are faked.
+
+| File | What it covers |
+|---|---|
+| [`test_tools.py`](backend/tests/test_tools.py) | each tool (BMI, Mifflin-St Jeor, Epley, nutrition aliases, typos and servings, schedule add/list/delete, per-user isolation, 10 concurrent writes); validator; parser; **timeout** and **crash** → friendly message; router failure; a full tool turn over the WebSocket; old clients see only A2 events; CRM profile, interaction log, greeting, and the profile reaching the prompt |
+| [`test_voice.py`](backend/tests/test_voice.py) | sentence splitting; a spoken turn's full event order (partials → final → thinking → tokens → audio in `seq` order → `audio_end` → latency); noise blips ignored; voice without models → clean error; TTS failure still delivers the text; audio ignored before `voice_start` |
+
+Live checks run against the real models: `benchmarks/voice_benchmark.py`, the A2
+`eval/concurrency_test.py`, `evaluation/off_topic_battery.py` (**28/30**, was 27/30), and a
+real-Chromium run with a fake-microphone WAV file (mic → tool card → spoken answer, 682 ms).
+
+## A3.11 Known limitations (Assignment 3)
+
+1. **No barge-in.** Half-duplex: you can't interrupt Nova while it speaks (this avoids it hearing
+   itself). Press the mic button to stop.
+2. **One tool per turn.** "Add leg day and show my schedule" runs only the first action.
+3. **A 3B model words the tool results.** The numbers come from the tool and are marked FINAL
+   (1RM 6/6 correct after the fix), but a small model can still round, rephrase or (rarely)
+   restate a number. It also doesn't always apply a saved injury to exercise advice.
+4. **The router only uses the last exchange.** "What's my BMI?" reuses the numbers from earlier
+   in the session; a very old value may be missed or reused unexpectedly.
+5. **The classifier is still a 3B model:** greetings mostly pass now ("Hello", "How's your day
+   going?"), but e.g. "Hey there" can still get the off-topic redirect.
+6. **0.6 s end-of-speech wait** (raised from 0.5 s, which cut people off at short pauses):
+   longer pauses mid-sentence still end the turn early.
+7. **English only for voice** (Whisper forced to English / Piper `en_US`). Roman Urdu typed text still works as
+   in A2.
+8. **The user ID is per browser** (localStorage), not a login. Clearing site data starts a new
+   member, and anyone using the same browser shares the profile.
+9. **Without an NVIDIA GPU**, ASR falls back to `base.en` on CPU (~300 ms per question), and the
+   LLM runs on the CPU too. Expect roughly 2–3 s to first audio instead of ~0.8 s.
+10. **The mic resampler** uses linear interpolation without a low-pass filter. That's fine for
+    speech recognition, but it's not hi-fi.
+12. **Document gaps found in the live demo (fixed):** no document said men can join, or gave
+    men's hours, so "plans for males?" retrieved only Ladies-Only documents (Nova implied the gym
+    was women-only) and "when do the males go?" got Ramadan hours. Fixed by adding
+    `who_can_join_men_and_women.md` and `hours_for_men.md` (both from the facts file) plus classifier
+    examples; re-runs now answer correctly and A2's recall@4 is unchanged (20/20). The 3B model can
+    still blur plan details when summarising several plans at once (e.g. saying every plan covers
+    all branches; only Plus and Elite do).
+11. **The first turn after a long idle can be slow:** Ollama unloads the model after 30 min and
+    the GPU drops to a low-power state (measured 9.2 s once). Turning the mic on now warms
+    everything in the background, which removes most of it.
+
+---
+
+# Part 2 — Setup, and Assignment 2 (RAG)
+
 ## 1. Quick start
 
 ### Prerequisites
 - **Python 3.11+** (developed on 3.14), **Node.js 18+**, and **[Ollama](https://ollama.com)**
-- About 3 GB of disk space for the LLM, the embedding model and the Python packages
+- About 3 GB of disk space for the LLM, the embedding model and the Python packages, plus about
+  **2.7 GB for voice** (Whisper `large-v3-turbo` ~1.6 GB, Piper voice 60 MB, the CUDA libraries ~1 GB if
+  you have an NVIDIA GPU)
+- A microphone and Chrome, Edge or Firefox for voice mode (localhost counts as a secure
+  origin, so the mic is allowed)
 
 ### 1.1 The LLM
 ```bash
@@ -49,14 +397,23 @@ ollama pull qwen2.5:3b
 cd backend
 python -m venv .venv
 source .venv/Scripts/activate        # Windows Git Bash;  .venv/bin/activate on macOS/Linux
-pip install -r requirements.txt
+pip install -r requirements.txt     # includes faster-whisper, onnxruntime, piper-tts (+ CUDA libs)
 cp .env.example .env                 # optional: every value has a default
 
 python -m rag.index                  # build the vector index from ../documents (~25 s first time)
-uvicorn app.main:app --port 8000
+
+# Assignment 3: download the Piper voice (60 MB) into backend/models/piper/
+python -m piper.download_voices en_US-lessac-medium --data-dir models/piper
+
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
-The first run downloads `all-MiniLM-L6-v2` (~90 MB) and the Qwen2.5 tokenizer (~7 MB) from
-Hugging Face. After that everything runs offline.
+The first run downloads `all-MiniLM-L6-v2` (~90 MB), the Qwen2.5 tokenizer (~7 MB) and the
+**faster-whisper model** (`large-v3-turbo` ~1.6 GB on a GPU, `base.en` ~140 MB on a CPU) from Hugging
+Face. The Silero VAD model ships inside the faster-whisper package. After that, everything runs
+offline. The startup log shows which ASR device was chosen, e.g.
+`ASR ready: faster-whisper large-v3-turbo on cuda (float16)`. Without an NVIDIA GPU it falls back to
+`base.en on cpu (int8)` automatically. To skip loading the speech models (text only), set
+`VOICE_ENABLED=false`.
 
 ### 1.3 Frontend
 ```bash
@@ -64,11 +421,15 @@ cd frontend
 npm install
 npm run dev                          # open http://localhost:5173
 ```
+Click **Chat with Nova**, then the **mic button** next to the text box to talk. The latency
+panel above the input shows the timings of the last turn.
 
 ### 1.4 Updating the documents
 Edit, add or delete files in `documents/`, then run `python -m rag.index` again from `backend/`.
-Only changed files are re-embedded (see §4.4). A running server picks up the new index
-automatically: its result cache is invalidated (§7.2), so no restart is needed.
+Only changed files are re-embedded (see §4.4). **Then restart the backend.** The result cache is
+designed to invalidate itself (§7.2, tested within one process), but in Assignment 3 a server that
+was already running kept returning its old search results after a re-index from a second process,
+until it was restarted.
 
 ### 1.5 Optional environment variables
 | Variable | Where | Effect |
@@ -76,6 +437,8 @@ automatically: its result cache is invalidated (§7.2), so no restart is needed.
 | `HF_HUB_OFFLINE=1` | backend shell | Skips Hugging Face's online update checks once the models are downloaded. Model + tokenizer loading went from **7.4 s to 0.8 s** on the test machine. Not hardcoded, because the first run needs the download. |
 | `OLLAMA_NUM_PARALLEL=4` | Ollama's environment (Windows: `setx OLLAMA_NUM_PARALLEL 4`, then quit and restart Ollama) | Lets Ollama serve 4 requests at once instead of queueing them. It roughly halves the wait under load (§7.3). |
 | `SIMILARITY_THRESHOLD`, `RETRIEVAL_TIMEOUT_S`, `NUM_CTX`, … | `backend/.env` | See [backend/app/config.py](backend/app/config.py). |
+| `VOICE_ENABLED`, `ASR_DEVICE` (`auto`/`cuda`/`cpu`), `ASR_MODEL` (`auto` or e.g. `base.en`), `TTS_VOICE_PATH` | `backend/.env` | Assignment 3 voice settings. |
+| `OLLAMA_HOST=http://127.0.0.1:11434` | `backend/.env` | The default. Keep `127.0.0.1`: `localhost` costs ~270 ms per LLM call on Windows (A3.6). |
 
 ---
 
@@ -101,7 +464,8 @@ Web UI <--WebSocket--> FastAPI Backend <--> Conversation Manager <--> Local LLM 
                                                     +--> Retrieval Module (MiniLM embeddings + Chroma)
 ```
 
-**One message, step by step** ([main.py](backend/app/main.py)):
+**One message, step by step** (Assignment 2 version; this logic now lives in
+[turn.py](backend/app/turn.py), which also runs the A3 tool router in the same `gather`, see A3.1):
 1. The **off-topic classifier** (an LLM call from Assignment 1, ~350 ms) and **retrieval** (~10 ms,
    in a worker thread) run **at the same time** with `asyncio.gather`. Retrieval adds about 0 ms.
 2. If the classifier says OFF_TOPIC but a document matches strongly (score ≥ 0.45), the
@@ -113,7 +477,7 @@ Web UI <--WebSocket--> FastAPI Backend <--> Conversation Manager <--> Local LLM 
 
 ## 3. Document collection
 
-**80 Markdown documents** in [`documents/`](documents/), 250–500 words each, 36,000 words in total,
+**82 Markdown documents** in [`documents/`](documents/) (80 from A2 + 2 added in A3, see A3.11), 250–500 words each, ~36,000 words in total,
 about the fictional **Zor Fitness Club** (F-7 Islamabad, G-11 Islamabad, Bahria Town Phase 7
 Rawalpindi).
 
@@ -396,6 +760,9 @@ extra client waits about 0.45 s longer, because every message makes 2 LLM calls 
 reply). `OLLAMA_NUM_PARALLEL=4` cuts the worst wait for 10 users by about half (5.37 s → 2.65 s) for 0.5 GB
 more memory, and single-user speed is unchanged. It's set on the test machine (§1.5).
 
+*Assignment 3 update:* re-measured with the voice models loaded and the `127.0.0.1` fix in A3.7
+(5 clients: 0.43 / 0.77 s; 10 clients: 1.68 / 2.92 s, now 3 LLM calls per message).
+
 ### 7.4 Streaming is unchanged from Assignment 1
 [tests/test_streaming_contract.py](backend/tests/test_streaming_contract.py) checks three paths
 (grounded answer, no match, classifier override):
@@ -563,6 +930,7 @@ Reproduce with `backend/.venv/Scripts/python.exe eval/e2e_examples.py` while the
 ## 10. API reference
 
 Unchanged from Assignment 1, except for **one optional field** on `done` (citations bonus).
+The Assignment 3 additions (voice, tools, latency events; opt-in with `?extended=1`) are in A3.9.
 
 **REST:** `GET /health` → `{status, model, ollama_reachable, active_sessions}` ·
 `POST /session/new` → `{session_id, stage}`
@@ -591,7 +959,7 @@ Unchanged from Assignment 1, except for **one optional field** on `done` (citati
 ## 11. Testing
 
 ```bash
-cd backend && python -m pytest -q        # 87 tests, about 1.5 minutes, no Ollama needed
+cd backend && python -m pytest -q        # 120 tests (87 A1/A2 + 33 A3), about 1 minute, no Ollama needed
 ```
 | File | What it covers |
 |---|---|
@@ -601,6 +969,7 @@ cd backend && python -m pytest -q        # 87 tests, about 1.5 minutes, no Ollam
 | `test_rag_cache.py` | cache hits, re-index invalidation, cached results returned as copies |
 | `test_streaming_contract.py` | WebSocket events identical to Assignment 1 in all RAG paths; the optional `sources` field only when grounded |
 | `test_failures.py` | all Phase IV failure cases (§8) |
+| `test_tools.py`, `test_voice.py` | Assignment 3, see A3.10 |
 
 Evaluation scripts (need Ollama running; the WebSocket ones also need the backend):
 `python -m rag.benchmark`, `eval/threshold_scores.py`, `eval/e2e_examples.py`, `eval/live_session_eval.py`,
@@ -640,7 +1009,7 @@ Evaluation scripts (need Ollama running; the WebSocket ones also need the backen
 7. **Truncated embeddings:** 10% of chunks (whole tables or rule lists) are longer than MiniLM's
    256 tokens, so their ends are invisible to retrieval. The LLM still sees the full chunk.
 8. **Ollama concurrency:** calls are queued unless `OLLAMA_NUM_PARALLEL` > 1. Even then, each
-   message costs 2 LLM calls.
+   message costs 3 LLM calls since Assignment 3 (classifier, tool router, reply).
 9. **In the extreme overflow case, all history is dropped** (the oldest-first rule) to keep the
    question and the best source.
 10. **Sessions and the cache live in memory:** a server restart forgets conversations.
@@ -662,21 +1031,29 @@ Evaluation scripts (need Ollama running; the WebSocket ones also need the backen
 ## 13. Project structure
 
 ```
-documents/                 80 gym documents (the corpus)
+documents/                 82 gym documents (the corpus)
 raw_sources/               research notes from public Pakistani gym pages + _research_log.md
 facts_source_of_truth.md   the fictional gym's facts; every document must match it
 backend/
   app/                     FastAPI app, conversation manager (RAG integration, budget), prompts, LLM engine
+    turn.py                one turn, shared by typed and spoken messages (A3)
+    orchestrator.py        tool router, argument validation, timeout, tool-result message (A3)
+    tools/                 calculate_fitness_metrics, lookup_nutrition, workout_schedule, user_profile (A3)
+    voice/                 vad.py, asr.py, tts.py, sentence_buffer.py, voice_session.py, speech_output.py (A3)
+  data/                    foods.json (42 foods); workouts.json + profiles.json created at runtime (git-ignored)
+  models/piper/            the Piper voice (git-ignored; see §1.2)
   rag/
     store.py               paths, embedding model, Chroma, index version marker
     index.py               offline indexing pipeline (python -m rag.index)
     retriever.py           retrieve(query) + LRU caches
     benchmark.py           latency benchmark (python -m rag.benchmark)
     chroma_db/             the vector index (git-ignored; rebuilt by rag.index)
-  tests/                   87 tests
+  tests/                   120 tests
+benchmarks/                A1 LLM benchmark + A3 voice_benchmark.py / voice_results.md
 eval/                      test questions, threshold scores, e2e examples, concurrency test, consistency check
 evaluation/                Assignment 1 off-topic battery (+ results.md with before/after runs)
-frontend/                  React + Vite UI
+frontend/                  React + Vite UI (A3: public/mic-processor.js, hooks/useMicrophone|useAudioPlayer|useVoiceChat)
 docs/                      Assignment 1 README and testing notes
-VIVA_NOTES.md              design decisions in plain words + the prompts used
+VIVA_NOTES.md              design decisions in plain words + the prompts used (A1/A2)
+PROMPTS.md                 Assignment 3 build log: each stage's purpose, decisions and measurements
 ```

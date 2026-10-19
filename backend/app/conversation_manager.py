@@ -144,6 +144,8 @@ class Session:
     history: "deque[Message]"
     stage: Stage = Stage.GREETING
     is_generating: bool = False
+    user_id: str = ""  # Assignment 3: whose workouts/profile the tools use (set by main.py)
+    last_turn_on_topic: bool = False  # Assignment 3: was the previous turn answered (not redirected)?
     created_at: float = field(default_factory=time.time)
     last_active: float = field(default_factory=time.time)
 
@@ -247,6 +249,18 @@ class ConversationManager:
         if len(text.split()) > FOLLOW_UP_MAX_WORDS:
             return False
         return text.startswith(FOLLOW_UP_STARTERS) or bool(FOLLOW_UP_PRONOUNS.search(text))
+
+    @staticmethod
+    def is_vague_follow_up(user_text: str) -> bool:
+        """Assignment 3, for the OFF-TOPIC gate only (retrieval keeps the rule above): a short
+        message that only makes sense with the previous turn -- "Okay, so what is that specific
+        times?", "and when do the males go?". The classifier sees one message alone and rejected
+        these in a live test. Fillers like "okay," are skipped; up to 8 words."""
+        text = re.sub(r"^(okay|ok|alright|so|and|um+|hmm+)[,.]?\s+", "", user_text.strip().lower())
+        if len(text.split()) > 8:
+            return False
+        return text.startswith(FOLLOW_UP_STARTERS + ("when ", "what about", "how about")) or bool(
+            FOLLOW_UP_PRONOUNS.search(text))
 
     def previous_user_message(self, session: Session) -> str | None:
         return next((m.content for m in reversed(session.history) if m.role == "user"), None)
@@ -371,12 +385,14 @@ class ConversationManager:
         return f"\n\n{'Source' if len(sources) == 1 else 'Sources'}: {', '.join(sources)}"
 
     def build_prompt(
-        self, session: Session, user_text: str, chunks: list[dict] | None = ()
+        self, session: Session, user_text: str, chunks: list[dict] | None = (),
+        extra_system: list[str] = (),
     ) -> tuple[list[dict[str, str]], list[str]]:
         """
         Assemble the exact message list to send to the LLM:
           [system prompt] + [history, oldest trimmed to fit] + [SOURCES or no-match note]
-          + [scope reminder] + [user message]
+          + [scope reminder] + [extra_system: tool result / member profile, Assignment 3]
+          + [user message]
         The static system prompt + history come first so they form the same prefix every
         turn (Ollama can reuse its cache); the per-turn sources come last, right next to
         the question. The new message is NOT written into session.history here -- callers
@@ -393,6 +409,8 @@ class ConversationManager:
             - count_tokens(SYSTEM_PROMPT)
             - count_tokens(SCOPE_REMINDER)
             - count_tokens(user_text)
+            # Assignment 3: tool result / member profile messages are always kept, like the user text.
+            - sum(count_tokens(text) for text in extra_system)
         )
 
         # Step 1: sources. Drop the lowest-ranked chunks until they fit their own budget
@@ -420,6 +438,9 @@ class ConversationManager:
         # "Sandwiching": repeat the scope rule as a system message immediately before the
         # final user turn -- the last instruction the small model sees before generating.
         messages.append({"role": "system", "content": SCOPE_REMINDER})
+        # Assignment 3: tool result / profile go AFTER the reminder, so the reminder's "refuse
+        # math" rule doesn't override a BMI result (measured: the model recomputed it wrongly).
+        messages.extend({"role": "system", "content": text} for text in extra_system)
         messages.append({"role": "user", "content": user_text})
         # Source files actually in the prompt (after the budget), deduplicated, best first.
         sources = list(dict.fromkeys(c["source"] for c in kept))

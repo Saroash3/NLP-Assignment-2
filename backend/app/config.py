@@ -20,7 +20,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=_ENV_FILE, env_file_encoding="utf-8", extra="ignore")
 
     # --- LLM / Ollama ---
-    ollama_host: str = "http://localhost:11434"
+    # 127.0.0.1, NOT "localhost" (Assignment 3 fix): on Windows "localhost" tries IPv6 (::1)
+    # first, Ollama listens on IPv4 only, and the fallback cost ~270 ms on EVERY LLM request
+    # (measured: classifier 310 ms -> 41 ms, main first token 330 ms -> 42 ms).
+    ollama_host: str = "http://127.0.0.1:11434"
     model_name: str = "qwen2.5:3b"
     request_timeout_s: float = 60.0
 
@@ -59,6 +62,16 @@ class Settings(BaseSettings):
     # Retrieval (embedding + vector search) gives up after this many seconds and the reply
     # continues without documents (Phase IV failure handling).
     retrieval_timeout_s: float = 2.0
+
+    # --- Voice (Assignment 3) --- models live in backend/models/ (see README: Setup)
+    tts_voice_path: Path = Path(__file__).resolve().parent.parent / "models" / "piper" / "en_US-lessac-medium.onnx"
+    # faster-whisper model; "auto" = large-v3-turbo (English) on CUDA (float16), else base.en on CPU (int8).
+    asr_model: str = "auto"
+    asr_device: str = "auto"
+    voice_enabled: bool = True  # set False to run text-only (voice models are then not loaded)
+    # Debugging speech recognition: save every final utterance as a WAV file in
+    # backend/logs/utterances/ (git-ignored). Off by default -- it records the member's voice.
+    voice_debug_save: bool = False
 
     # --- Server ---
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]

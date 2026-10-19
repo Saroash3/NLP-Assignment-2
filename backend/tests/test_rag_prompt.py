@@ -156,3 +156,12 @@ def test_oldest_history_is_trimmed_and_prompt_fits_num_ctx():
     history = [m["content"] for m in messages[1:-3]]
     assert len(history) < 12  # some history was trimmed...
     assert history[-1].startswith("answer 5")  # ...and the newest turn survived (oldest went first)
+
+
+def test_vague_follow_ups_for_the_off_topic_gate():
+    """Assignment 3: live-test messages that only make sense after the previous turn."""
+    from app.conversation_manager import ConversationManager as CM
+    for text in ("Okay, so what is that specific times?", "Okay, so when do the males go?", "and for ladies?"):
+        assert CM.is_vague_follow_up(text), text
+    for text in ("Who won the cricket World Cup?", "What's 12 times 4?", "Write me a JavaScript function"):
+        assert not CM.is_vague_follow_up(text), text

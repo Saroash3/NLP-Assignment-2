@@ -14,7 +14,7 @@ G-11 is Zor Fitness Club's compact, budget-friendly branch. It serves students a
 | 4:30–5:00pm | Floor cleaning (closed) |
 | 5:00–11:00pm | Men |
 
-**G-11 is closed every Sunday.** Last entry is 45 minutes before each session closes. On Fridays the floor also closes 1:00pm–2:15pm for Jumu'ah, which falls inside ladies hours.
+**Men's hours at G-11 are 6:00am–10:00am and 5:00pm–11:00pm** (two blocks; the evening block starts at 5:00pm, after cleaning). **Ladies hours are 10:30am–4:30pm.** **G-11 is closed every Sunday.** Last entry is 45 minutes before each session closes. On Fridays the floor also closes 1:00pm–2:15pm for Jumu'ah, which falls inside ladies hours.
 
 ## Facilities
 - Cardio machines, free weights with dumbbells up to **40 kg**, pin machines, and **2 power racks**

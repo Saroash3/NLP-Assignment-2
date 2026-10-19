@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
@@ -16,8 +17,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ValidationError
 
 from app.config import get_settings
-from app.conversation_manager import ConversationManager, _qwen_tokenizer
-from app.llm_engine import LLMEngine, LLMEngineError
+from app.conversation_manager import ConversationManager, Message, _qwen_tokenizer
+from app.llm_engine import LLMEngine
+from app.tools import user_profile
+from app.turn import TurnTimings, run_turn
+from app.voice import asr, tts, vad
+from app.voice.speech_output import SpeechOutput
+from app.voice.voice_session import VoiceSession, VoiceUnavailable
 from rag import retriever
 from app.schemas import (
     ClientMessage,
@@ -28,6 +34,7 @@ from app.schemas import (
     NewSessionResponse,
     SessionEvent,
     TokenEvent,
+    VoiceStateEvent,
 )
 
 logger = logging.getLogger("zor_assistant")
@@ -47,6 +54,16 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(_qwen_tokenizer)
     except Exception:
         logger.exception("RAG components failed to load; continuing without retrieval")
+    # Assignment 3: speech models, also loaded ONCE and in threads. If one fails, voice mode
+    # reports "unavailable" when started, and text chat keeps working.
+    if get_settings().voice_enabled:
+        for name, loader in (("VAD", vad.load), ("ASR", asr.load), ("TTS", tts.load)):
+            try:
+                await asyncio.to_thread(loader)
+            except Exception:
+                logger.exception("%s failed to load; voice mode will be unavailable", name)
+        # Load the LLM into GPU memory now, so the first member doesn't wait seconds for it.
+        asyncio.create_task(app.state.llm_engine.warm_up())
     logger.info("Zor Fitness Assistant API starting up (model=%s)", get_settings().model_name)
     yield
     await app.state.llm_engine.aclose()
@@ -66,6 +83,22 @@ app.add_middleware(
 async def _send(websocket: WebSocket, event: BaseModel) -> None:
     # exclude_none: an optional field that isn't set (DoneEvent.sources) is left out of the JSON.
     await websocket.send_json(event.model_dump(exclude_none=True))
+
+
+WARM_UP_EVERY_S = 300  # Ollama keeps the model 30 min; re-warming more often is wasted work
+_last_warm_up = 0.0
+
+
+async def _warm_up(llm_engine: LLMEngine) -> None:
+    """Load the LLM back into GPU memory and run one tiny ASR + TTS job (errors are ignored).
+    Skipped if done in the last 5 minutes, so two members starting voice together don't both
+    queue warm-up work in front of their real questions."""
+    global _last_warm_up
+    if time.monotonic() - _last_warm_up < WARM_UP_EVERY_S:
+        return
+    _last_warm_up = time.monotonic()
+    await asyncio.gather(llm_engine.warm_up(), asr.warm_up_async(),
+                         tts.synthesize_async("OK."), return_exceptions=True)
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -89,7 +122,15 @@ async def new_session() -> NewSessionResponse:
 
 
 @app.websocket("/ws/chat")
-async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=None)) -> None:
+async def ws_chat(
+    websocket: WebSocket,
+    session_id: str | None = Query(default=None),
+    # Assignment 3, both optional (an A1/A2 client sends neither and sees no difference):
+    #   extended=1  the client understands the new event types (tools, voice, latency)
+    #   user_id     a stable id kept by the browser, for per-user data (workouts, profile)
+    extended: bool = Query(default=False),
+    user_id: str | None = Query(default=None, max_length=64),
+) -> None:
     # conversation_manager is looked up once (it's a fixed, long-lived singleton), but
     # llm_engine is re-read from app.state on every message rather than cached in a local --
     # cheap lookup, and it keeps the engine hot-swappable (useful for tests, and for any
@@ -99,14 +140,58 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
     await websocket.accept()
 
     session = conversation_manager.get_session(session_id) if session_id else None
+    is_new_session = session is None
     if session is None:
         session = conversation_manager.create_session()
+    session.user_id = user_id or session.session_id
     await _send(websocket, SessionEvent(session_id=session.session_id, stage=session.stage.value))
 
+    async def send(event: BaseModel) -> None:
+        await _send(websocket, event)
+
+    async def send_extra(event: BaseModel) -> None:
+        """New (Assignment 3) event types: only for clients that asked for them."""
+        if extended:
+            await _send(websocket, event)
+
+    voice = VoiceSession(send_extra)  # microphone state of THIS connection (Assignment 3)
+    greeting = None
+
     try:
+        if user_id:
+            profile = await user_profile.load(user_id)
+            voice.member_name = profile.get("name")  # helps Whisper spell an unusual name
+            # CRM bonus: a returning member (new session) is greeted by name with their last
+            # request -- as a normal assistant message (token + done), kept in the history so a
+            # reply like "yes, let's continue" makes sense. Spoken too, once, when voice starts.
+            # (Inside the try: a tab closed right now is a normal disconnect, not a crash.)
+            greeting = user_profile.greeting(profile) if extended and is_new_session else None
+            if greeting:
+                await send(TokenEvent(content=greeting))
+                await send(DoneEvent(stage=session.stage.value))
+                session.history.append(Message(role="assistant", content=greeting))
+
         while True:
-            raw = await websocket.receive_text()
+            # receive() instead of receive_text(): the socket now also carries BINARY frames
+            # (microphone audio). Text frames are handled exactly as before.
+            message = await websocket.receive()
+            if message["type"] == "websocket.disconnect":
+                raise WebSocketDisconnect(message.get("code", 1000))
             llm_engine: LLMEngine = websocket.app.state.llm_engine
+
+            if message.get("bytes") is not None:
+                utterance = await voice.feed(message["bytes"])
+                if utterance:  # end of speech: the transcript is a normal user turn
+                    text, timings = utterance
+                    await send_extra(VoiceStateEvent(state="thinking"))
+                    await run_turn(send, conversation_manager, llm_engine, session, text,
+                                   send_extra=send_extra, speech=SpeechOutput(send_extra, timings),
+                                   timings=timings)
+                    # The member may have just told Nova their name: refresh it for the next turn.
+                    voice.member_name = (await user_profile.load(session.user_id)).get("name")
+                    await voice.listen_again()
+                continue
+            raw = message.get("text") or ""
 
             try:
                 client_msg = ClientMessage.model_validate_json(raw)
@@ -128,10 +213,35 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
 
             if client_msg.type == ClientMessageType.RESET:
                 session = conversation_manager.reset_session(session.session_id)
+                session.user_id = user_id or session.session_id
                 await _send(
                     websocket,
                     SessionEvent(session_id=session.session_id, stage=session.stage.value),
                 )
+                continue
+
+            if client_msg.type == ClientMessageType.VOICE_START:
+                try:
+                    await voice.start()
+                except VoiceUnavailable as e:
+                    await send_extra(ErrorEvent(message=str(e), code="voice_unavailable"))
+                    continue
+                # After a long idle the LLM is unloaded and the GPU is cold (measured: the first
+                # spoken turn took 9.2 s). Warm everything in the background while the member
+                # is still starting to talk.
+                asyncio.create_task(_warm_up(llm_engine))
+                if greeting:  # speak the welcome-back greeting once (it is already on screen)
+                    speech = SpeechOutput(send_extra, TurnTimings())
+                    await speech.feed(greeting)
+                    await speech.finish()
+                    await speech.close()
+                    greeting = None
+                    # Speaking set the state to "speaking": switch back to "listening", or the
+                    # browser keeps the mic closed (it only sends audio while the server listens).
+                    await voice.listen_again()
+                continue
+            if client_msg.type == ClientMessageType.VOICE_STOP:
+                await voice.stop()
                 continue
 
             # --- type == MESSAGE ---
@@ -143,74 +253,10 @@ async def ws_chat(websocket: WebSocket, session_id: str | None = Query(default=N
                 )
                 continue
 
-            # A session can be shared by more than one live connection (e.g. the same
-            # session_id opened in two browser tabs). is_generating is what stops those
-            # two connections from generating into the same history at the same time --
-            # a single connection alone can never hit this, since receive_text() already
-            # serializes messages on one socket.
-            if session.is_generating:
-                await _send(
-                    websocket,
-                    ErrorEvent(
-                        message="Still working on the previous message -- please wait for it "
-                        "to finish.",
-                        code="busy",
-                    ),
-                )
-                continue
-
-            session.is_generating = True
-            try:
-                # Stage 1 of the two-stage pipeline (classify) runs IN PARALLEL with
-                # retrieval: the classifier is an LLM call (a few hundred ms) and retrieval
-                # runs in a worker thread (tens of ms), so retrieval adds ~0 ms to the wait.
-                # If the message is off-topic, the retrieved chunks are simply unused.
-                redirect, chunks = await asyncio.gather(
-                    conversation_manager.classify_off_topic(llm_engine, user_text),
-                    conversation_manager.retrieve_context(session, user_text),
-                )
-                # A strong document match overrides a (wrong) OFF_TOPIC verdict.
-                redirect = conversation_manager.apply_retrieval_override(redirect, chunks)
-
-                if redirect is not None:
-                    # Off-topic: skip the real generation call entirely and "stream" the
-                    # canned redirect as the same TokenEvent/DoneEvent sequence a real
-                    # reply would produce, so the frontend can't tell the difference.
-                    for word in redirect.split(" "):
-                        await _send(websocket, TokenEvent(content=word + " "))
-                    # Redirects are not kept in the model's history (no facts; they prime refusals).
-                    conversation_manager.record_turn(session, user_text, redirect, remember=False)
-                    await _send(websocket, DoneEvent(stage=session.stage.value))
-                else:
-                    prompt_messages, used_sources = conversation_manager.build_prompt(
-                        session, user_text, chunks
-                    )
-                    reply_chunks: list[str] = []
-                    async for token in llm_engine.stream_chat(prompt_messages):
-                        reply_chunks.append(token)
-                        await _send(websocket, TokenEvent(content=token))
-
-                    full_reply = "".join(reply_chunks).strip()
-                    if not full_reply:
-                        full_reply = "Sorry, I didn't quite catch that -- could you rephrase?"
-
-                    # Citations, only when the answer was grounded in sources: a final
-                    # "Source: ..." line streamed as one more ordinary token, and the same list
-                    # in the optional `sources` field of `done` (for the UI chips).
-                    sources = conversation_manager.citations_for(used_sources, full_reply)
-                    if sources:
-                        await _send(websocket, TokenEvent(content=conversation_manager.source_line(sources)))
-                    # History keeps the reply WITHOUT the source line: otherwise the model copies
-                    # "Sources: ..." into its next answers and the line appears twice.
-                    conversation_manager.record_turn(
-                        session, user_text, full_reply,
-                        remember=not conversation_manager.is_refusal(full_reply),
-                    )
-                    await _send(websocket, DoneEvent(stage=session.stage.value, sources=sources))
-            except LLMEngineError as e:
-                await _send(websocket, ErrorEvent(message=str(e), code="llm_error"))
-            finally:
-                session.is_generating = False
+            # The whole turn (classify || retrieve -> LLM stream -> optional tool -> done) lives
+            # in turn.py, shared with spoken turns.
+            await run_turn(send, conversation_manager, llm_engine, session, user_text,
+                           send_extra=send_extra)
 
     except WebSocketDisconnect:
         logger.info("Client disconnected (session_id=%s)", session.session_id)
