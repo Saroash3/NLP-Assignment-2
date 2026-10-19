@@ -20,6 +20,9 @@ class ClientMessageType(str, Enum):
     # as BINARY frames (16 kHz mono 16-bit PCM) on the same socket.
     VOICE_START = "voice_start"
     VOICE_STOP = "voice_stop"
+    # Tap-to-talk: everything between these two is ONE utterance (no automatic end-of-speech).
+    RECORD_START = "record_start"
+    RECORD_STOP = "record_stop"
 
 
 class ClientMessage(BaseModel):

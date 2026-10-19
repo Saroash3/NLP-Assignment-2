@@ -1,22 +1,49 @@
-import { Mic } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { VoiceMode } from "../hooks/useVoiceChat";
 
-/** Toggle for voice mode, placed next to the text input. Volt-filled while voice is on. */
-export function MicButton({ active, disabled, onToggle }: { active: boolean; disabled: boolean; onToggle: () => void }) {
+const LABELS: Record<VoiceMode, [idle: string, on: string]> = {
+  tap: ["Tap to talk", "Tap again to send"],
+  handsfree: ["Turn on hands-free voice", "Turn voice mode off"],
+};
+
+/** The mic next to the text input. Volt-filled while recording (tap) or listening (hands-free). */
+export function MicButton({ mode, on, disabled, onToggle }: {
+  mode: VoiceMode; on: boolean; disabled: boolean; onToggle: () => void;
+}) {
+  const label = LABELS[mode][on ? 1 : 0];
   return (
     <Button
       type="button"
       size="icon"
-      variant={active ? "default" : "outline"}
-      className={cn("size-[46px] shrink-0", active && "animate-pulse")}
+      variant={on ? "default" : "outline"}
+      className={cn("size-[46px] shrink-0", on && "animate-pulse")}
       onClick={onToggle}
       disabled={disabled}
-      aria-pressed={active}
-      aria-label={active ? "Turn voice mode off" : "Talk to Nova (voice mode)"}
-      title={active ? "Voice mode on: click to stop" : "Voice mode: talk instead of typing"}
+      aria-pressed={on}
+      aria-label={label}
+      title={label}
     >
-      <Mic />
+      {mode === "tap" && on ? <Square /> : <Mic />}
+    </Button>
+  );
+}
+
+/** Small switch between tap-to-talk (default) and hands-free (the VAD ends each utterance). */
+export function VoiceModeToggle({ mode, onChange }: { mode: VoiceMode; onChange: (m: VoiceMode) => void }) {
+  const next = mode === "tap" ? "handsfree" : "tap";
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="ghost"
+      className="h-[46px] shrink-0 px-3 text-xs text-mute"
+      onClick={() => onChange(next)}
+      title={mode === "tap" ? "Switch to hands-free voice" : "Switch to tap-to-talk"}
+      aria-label={`Voice mode: ${mode === "tap" ? "tap to talk" : "hands-free"}. Click to switch.`}
+    >
+      {mode === "tap" ? "Tap to talk" : "Hands-free"}
     </Button>
   );
 }

@@ -13,6 +13,7 @@ Two ways the profile is used:
 """
 from __future__ import annotations
 
+import difflib
 import time
 from pathlib import Path
 
@@ -50,7 +51,20 @@ async def run(args: dict, ctx: ToolContext) -> dict:
 
     def update(data: dict) -> dict:
         profile = data.setdefault(ctx.user_id, {})
+        typed_name = profile.get("name") if profile.get("name_source") == "typed" else None
+        if ctx.spoken and typed_name and "name" in changes and difflib.SequenceMatcher(
+                None, typed_name.lower(), changes["name"].lower()).ratio() >= 0.75:
+            # A spoken near-miss ("Saros") of a name the member TYPED ("Sarosh") is a mishearing
+            # of the same name: keep the typed spelling. A different name still replaces it.
+            changes["name"] = typed_name
+            changes_source = "typed"
+        else:
+            changes_source = "spoken" if ctx.spoken else "typed"
         profile.update(changes, updated_at=time.strftime("%Y-%m-%d %H:%M"))
+        if "name" in changes:
+            # Remember HOW the name was learned: only a typed name is trusted as a hint for the
+            # speech recogniser (see member_name_hint).
+            profile["name_source"] = changes_source
         return {k: profile[k] for k in FIELDS if profile.get(k)}
 
     return {"saved": changes, "profile": await store.update(update)}
@@ -66,6 +80,13 @@ TOOL = Tool(
 
 
 # --- Used by the server directly (not LLM tools) ---
+
+
+def member_name_hint(profile: dict) -> str | None:
+    """The name to give Whisper as a spelling hint -- only if the member TYPED it. Measured live:
+    a misheard spoken name ("Saros" for "Sarosh") was fed back as a hint, so every spoken
+    correction was heard as "Saros" again and the mistake could never be fixed by voice."""
+    return profile.get("name") if profile.get("name_source") == "typed" else None
 
 async def load(user_id: str) -> dict:
     return await store.get(user_id) or {}

@@ -18,6 +18,8 @@ PARAMETERS = {
         "metric": {"type": "string", "enum": ["bmi", "daily_calories", "one_rep_max"]},
         "weight_kg": {"type": "number", "description": "body weight in kg (bmi, daily_calories)"},
         "height_cm": {"type": "number", "description": "height in cm (bmi, daily_calories)"},
+        "height_ft": {"type": "number", "description": "height in feet, if given in feet (e.g. 6)"},
+        "height_in": {"type": "number", "description": "extra inches with height_ft (e.g. 1 for 6'1\")"},
         "age": {"type": "integer", "description": "age in years (daily_calories)"},
         "sex": {"type": "string", "enum": ["male", "female"]},
         "activity_level": {"type": "string", "enum": list(ACTIVITY_FACTORS)},
@@ -69,8 +71,21 @@ def one_rep_max(lifted_kg: float, reps: int) -> dict:
     return {"one_rep_max_kg": round(estimate, 1), "formula": "Epley"}
 
 
+def _height_and_weight_check(args: dict) -> None:
+    """Feet/inches -> cm (exact, done here: the LLM turned "6 foot" into 720 cm in a live test),
+    then reject impossible values instead of returning a nonsense BMI."""
+    if "height_cm" not in args and "height_ft" in args:
+        args["height_cm"] = round(args["height_ft"] * 30.48 + args.get("height_in", 0) * 2.54, 1)
+    if "height_cm" in args and not 120 <= args["height_cm"] <= 230:
+        raise ToolError(f"A height of {args['height_cm']:g} cm doesn't look right -- please give it "
+                        "in centimetres or in feet and inches.")
+    if "weight_kg" in args and not 30 <= args["weight_kg"] <= 300:
+        raise ToolError(f"A weight of {args['weight_kg']:g} kg doesn't look right -- please check it.")
+
+
 async def run(args: dict, ctx: ToolContext) -> dict:
     metric = args["metric"]
+    _height_and_weight_check(args)
     if metric == "bmi":
         _need(args, "weight_kg", "height_cm", what="BMI")
         return bmi(args["weight_kg"], args["height_cm"])

@@ -323,3 +323,11 @@ OFF_TOPIC_REDIRECTS: list[str] = [
         "help you with a class, plan, or trainer question instead?",
     ]
 ]
+
+
+# Assignment 3: the sources slot on a turn answered by a tool when no document matched -- the
+# NO_MATCH note ("say our documents don't cover that") made the model ignore a correct tool result.
+TOOL_TURN_NOTE = (
+    "SOURCES: none needed -- this message is about the member's own fitness or food and is answered "
+    "by the TOOL RESULT below. Answer from that result; do not say the documents don't cover it."
+)

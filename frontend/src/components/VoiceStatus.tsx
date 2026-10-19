@@ -1,4 +1,5 @@
 import type { VoiceState } from "../types";
+import type { VoiceMode } from "../hooks/useVoiceChat";
 import { cn } from "@/lib/utils";
 
 const LABELS: Record<VoiceState, string> = {
@@ -19,11 +20,12 @@ const DOT: Record<VoiceState, string> = {
 };
 
 /** One line above the input bar: the voice state and the live (partial) transcript. */
-export function VoiceStatus({ state, partial }: { state: VoiceState; partial: string }) {
+export function VoiceStatus({ state, partial, mode }: { state: VoiceState; partial: string; mode: VoiceMode }) {
+  const label = mode === "tap" && state === "listening" ? "Recording… tap the mic again to send" : LABELS[state];
   return (
     <div className="flex items-center gap-3 border-t border-line bg-surface px-6 py-2 text-sm" aria-live="polite">
       <span className={cn("size-2.5 shrink-0 rounded-full", DOT[state])} />
-      <span className="shrink-0 font-semibold text-ink">{LABELS[state]}</span>
+      <span className="shrink-0 font-semibold text-ink">{label}</span>
       {partial && <span className="truncate italic text-mute">“{partial}”</span>}
     </div>
   );

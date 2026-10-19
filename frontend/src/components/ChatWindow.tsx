@@ -6,7 +6,7 @@ import { useVoiceChat } from "../hooks/useVoiceChat";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
 import { StageBadge } from "./StageBadge";
-import { MicButton } from "./MicButton";
+import { MicButton, VoiceModeToggle } from "./MicButton";
 import { VoiceStatus } from "./VoiceStatus";
 import { LatencyPanel } from "./LatencyPanel";
 import { Toaster } from "@/components/ui/sonner";
@@ -45,15 +45,16 @@ export function ChatWindow({ onExit }: { onExit: () => void }) {
   // Assignment 3: toast when an open connection drops (the banner below stays as before);
   // the server-side voice session is gone with it, so voice mode switches off.
   const wasOpen = useRef(false);
-  const { active: voiceActive, stop: stopVoice } = voice;
+  const voiceOn = voice.active || voice.recording;
+  const { stop: stopVoice } = voice;
   useEffect(() => {
     if (status === "open") wasOpen.current = true;
     else if (wasOpen.current) {
       wasOpen.current = false;
       toast.error("Connection to Nova lost -- reconnecting…");
-      if (voiceActive) stopVoice();
+      if (voiceOn) stopVoice();
     }
-  }, [status, voiceActive, stopVoice]);
+  }, [status, voiceOn, stopVoice]);
 
   const inputDisabled = status !== "open";
   const sendDisabled = inputDisabled || isStreaming || !draft.trim();
@@ -122,13 +123,15 @@ export function ChatWindow({ onExit }: { onExit: () => void }) {
         </AnimatePresence>
       </div>
 
-      {voice.active && <VoiceStatus state={voice.state} partial={voice.partial} />}
+      {voice.state !== "idle" && <VoiceStatus state={voice.state} partial={voice.partial} mode={voice.mode} />}
       <LatencyPanel latency={voice.latency} />
       <div className="chat-input-bar">
+        <VoiceModeToggle mode={voice.mode} onChange={voice.setMode} />
         <MicButton
-          active={voice.active}
-          disabled={inputDisabled}
-          onToggle={() => (voice.active ? voice.stop() : void voice.start())}
+          mode={voice.mode}
+          on={voiceOn}
+          disabled={inputDisabled || voice.busy}
+          onToggle={voice.toggle}
         />
         <input
           value={draft}

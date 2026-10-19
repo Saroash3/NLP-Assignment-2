@@ -56,4 +56,6 @@ export type ClientEvent =
   | { type: "message"; content: string }
   | { type: "reset" }
   | { type: "voice_start" } // Assignment 3; mic audio itself goes as binary frames
-  | { type: "voice_stop" };
+  | { type: "voice_stop" }
+  | { type: "record_start" } // tap-to-talk: everything until record_stop is one utterance
+  | { type: "record_stop" };

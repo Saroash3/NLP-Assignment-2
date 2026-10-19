@@ -386,7 +386,7 @@ class ConversationManager:
 
     def build_prompt(
         self, session: Session, user_text: str, chunks: list[dict] | None = (),
-        extra_system: list[str] = (),
+        extra_system: list[str] = (), context_note: str | None = None,
     ) -> tuple[list[dict[str, str]], list[str]]:
         """
         Assemble the exact message list to send to the LLM:
@@ -416,7 +416,9 @@ class ConversationManager:
         # Step 1: sources. Drop the lowest-ranked chunks until they fit their own budget
         # (and whatever space is really left, in case the user message was huge).
         kept: list[dict] = []
-        if chunks is None:  # retrieval failed: send the "unavailable" note, not "no match"
+        if context_note is not None:  # Assignment 3: a tool answers this turn (see turn.py)
+            context = context_note
+        elif chunks is None:  # retrieval failed: send the "unavailable" note, not "no match"
             context = build_context_message(None)
         else:
             kept = self.select_chunks(chunks, min(CHUNK_TOKEN_BUDGET, available))

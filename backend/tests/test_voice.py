@@ -239,3 +239,41 @@ def test_sound_alikes_of_the_assistants_name_become_nova():
         for wrong, right in asr.FIXES:
             text = wrong.sub(right, text)
         assert "Nova" in text and "ova," in text or "Nova!" in text
+
+
+# ---------------------------------------------------------------- tap-to-talk
+
+
+def test_tap_to_talk_keeps_pauses_inside_one_utterance(fake_voice):
+    """record_start ... record_stop is ONE turn: a long pause in the middle (which would end a
+    hands-free utterance) must not cut the member off."""
+    with TestClient(app) as client:
+        app.state.llm_engine = Engine()
+        with client.websocket_connect("/ws/chat?extended=1") as ws:
+            ws.receive_json()
+            ws.send_json({"type": "record_start"})
+            assert ws.receive_json() == {"type": "voice_state", "state": "listening"}
+            send_audio(ws, pcm(0.5, True), pcm(1.5, False), pcm(0.5, True))  # 1.5 s pause inside
+            ws.send_json({"type": "record_stop"})
+            events = receive_until(ws, "latency")
+            assert sum(e["type"] == "transcript" and e["final"] for e in events) == 1
+            assert "done" in types_of(events) and "audio_end" in types_of(events)
+            assert ws.receive_json() == {"type": "voice_state", "state": "idle"}  # mic closed after
+
+
+def test_tap_to_talk_with_no_speech_explains_instead_of_sending(fake_voice):
+    with TestClient(app) as client:
+        app.state.llm_engine = Engine()
+        with client.websocket_connect("/ws/chat?extended=1") as ws:
+            ws.receive_json()
+            ws.send_json({"type": "record_start"})
+            ws.receive_json()
+            send_audio(ws, pcm(1.0, False))  # silence only
+            ws.send_json({"type": "record_stop"})
+            error = ws.receive_json()
+            assert error["type"] == "error" and "didn't catch any speech" in error["message"]
+            assert ws.receive_json() == {"type": "voice_state", "state": "idle"}
+
+
+def types_of(events):
+    return [e["type"] for e in events]

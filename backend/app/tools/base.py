@@ -22,6 +22,7 @@ class ToolContext:
     """Facts the ORCHESTRATOR knows and the LLM must not choose, e.g. whose data to touch."""
 
     user_id: str
+    spoken: bool = False  # the request came from speech (a name in it may be misheard)
 
 
 @dataclass(frozen=True)

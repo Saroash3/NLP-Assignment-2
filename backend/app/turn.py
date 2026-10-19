@@ -30,12 +30,12 @@ from app.conversation_manager import ConversationManager, Session
 from app.llm_engine import LLMEngine, LLMEngineError
 from app.schemas import DoneEvent, ErrorEvent, LatencyEvent, TokenEvent, ToolCallEvent, ToolResultEvent
 from app.tools import user_profile
+from app.prompts import TOOL_TURN_NOTE
 from app.tools.base import ToolContext
 
 logger = logging.getLogger("zor_assistant")
 
 Send = Callable[[BaseModel], Awaitable[None]]
-ROUTER_HISTORY_MESSAGES = 2  # the router sees the last exchange, for follow-ups ("and 3 eggs?")
 
 
 @dataclass
@@ -92,17 +92,22 @@ async def run_turn(send: Send, conversation_manager: ConversationManager, llm_en
         # Three independent steps IN PARALLEL: the off-topic classifier (LLM call), retrieval
         # (worker thread) and the tool router (LLM call). The turn waits for the slowest one.
         start = time.perf_counter()
-        recent = [{"role": m.role, "content": m.content}
-                  for m in list(session.history)[-ROUTER_HISTORY_MESSAGES:]]
         # A browser-provided user_id (not the session-id fallback) means a returning member
         # can be remembered: their CRM profile is loaded in the same gather (file read, thread).
         known_user = session.user_id not in ("", session.session_id)
         redirect, chunks, call, profile = await asyncio.gather(
             conversation_manager.classify_off_topic(llm_engine, user_text),
             conversation_manager.retrieve_context(session, user_text),
-            orchestrator.route(llm_engine, recent, user_text),
+            orchestrator.route(llm_engine, [], user_text),
             user_profile.load(session.user_id) if known_user else asyncio.sleep(0, {}),
         )
+        # The router sees ONLY the latest message: with earlier turns in its context the 3B
+        # model answered or re-used the previous question (measured: "carbs in rice" looked up
+        # egg). Only a vague follow-up with no tool found ("what about chicken?") gets one retry
+        # with the previous message attached.
+        previous = conversation_manager.previous_user_message(session)
+        if call is None and previous and conversation_manager.is_vague_follow_up(user_text):
+            call = await orchestrator.route(llm_engine, [], f"{previous} {user_text}")
         timings.retrieval_ms = (time.perf_counter() - start) * 1000
         # A strong document match overrides a (wrong) OFF_TOPIC verdict, and so does a tool
         # call: "what's my BMI" is the member's own fitness, which the classifier can't know.
@@ -122,13 +127,17 @@ async def run_turn(send: Send, conversation_manager: ConversationManager, llm_en
             conversation_manager.record_turn(session, user_text, redirect, remember=False)
             await send(DoneEvent(stage=session.stage.value))
         else:
-            ctx = ToolContext(user_id=session.user_id or session.session_id)
+            ctx = ToolContext(user_id=session.user_id or session.session_id, spoken=speech is not None)
             note = user_profile.profile_note(profile)
             extra = [note] if note else []
             if call:
+                call = orchestrator.apply_unit_hints(call, user_text)  # feet/pounds read by code
                 extra.append(await _use_tool(call, ctx, send_extra, timings))  # tool result goes last
             prompt_messages, used_sources = conversation_manager.build_prompt(
-                session, user_text, chunks, extra_system=extra
+                session, user_text, chunks, extra_system=extra,
+                # A tool answers this one: "no matching documents" made the model reply "our
+                # documents don't cover that" despite a correct tool result (live test, rice).
+                context_note=TOOL_TURN_NOTE if call and not chunks else None,
             )
             reply_chunks: list[str] = []
             llm_start = time.perf_counter()

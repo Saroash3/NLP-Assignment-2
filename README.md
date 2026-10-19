@@ -138,7 +138,7 @@ calling, just in a prompt small enough for a 3B model. Details in [PROMPTS.md](P
 | Name | Description (as given to the LLM) | Data |
 |---|---|---|
 | `calculate_fitness_metrics` | Calculate BMI, daily calorie needs (maintenance, loss, gain) or an estimated one-rep max from the member's numbers. | BMI + WHO category; Mifflin-St Jeor BMR × activity factor; Epley 1RM (≤ 12 reps) |
-| `lookup_nutrition` | Look up calories, protein, carbs and fat for a common food (optionally for a given number of grams or servings). | [`backend/data/foods.json`](backend/data/foods.json): **42 foods**, per 100 g + a typical serving, incl. roti, daal, chana, dahi; alias + fuzzy matching |
+| `lookup_nutrition` | Look up calories, protein, carbs, fat, fiber and sugar for almost any food or dish (13,000+ foods), for a given amount in grams, servings or a portion like a slice or a cup. | [`foods.json`](backend/data/foods.json): 59 hand-made entries (Pakistani dishes: karahi, nihari, haleem, lassi, chai, biryani-style, kababs… + aliases like "anda", "chawal"), searched first; then [`foods_usda.json`](backend/data/foods_usda.json): **13,224 foods from USDA FoodData Central** (public domain; Survey "as eaten" + SR Legacy), with real portion weights, built by [`build_food_db.py`](backend/data/build_food_db.py) |
 | `workout_schedule` | Add a workout to the member's weekly schedule, list their scheduled workouts, or delete one (by id or by day). | `backend/data/workouts.json`, keyed by user ID |
 | `user_profile` *(CRM bonus)* | Remember (update) or recall (get) facts about the member across visits: their name, fitness goal, injuries, preferences and last workout. | `backend/data/profiles.json`, keyed by user ID |
 
@@ -149,10 +149,12 @@ calculate_fitness_metrics: {"type":"object","required":["metric"],"properties":{
   "weight_kg":{"type":"number"}, "height_cm":{"type":"number"}, "age":{"type":"integer"},
   "sex":{"type":"string","enum":["male","female"]},
   "activity_level":{"type":"string","enum":["sedentary","light","moderate","active","very_active"]},
+  "height_ft":{"type":"number"}, "height_in":{"type":"number"},   // converted exactly by the code
   "lifted_kg":{"type":"number"}, "reps":{"type":"integer"}}}
 
 lookup_nutrition: {"type":"object","required":["food"],"properties":{
-  "food":{"type":"string"}, "grams":{"type":"number"}, "servings":{"type":"number"}}}
+  "food":{"type":"string"}, "grams":{"type":"number"}, "servings":{"type":"number"},
+  "portion":{"type":"string"}}}   // e.g. "slice", "cup", "bowl", "piece"
 
 workout_schedule: {"type":"object","required":["action"],"properties":{
   "action":{"type":"string","enum":["add","list","delete"]},
@@ -201,8 +203,14 @@ not in my nutrition database."*; a timeout gives *"The tool took too long to res
   (base64 PCM, `seq`) **while the text is still streaming**. The browser schedules each buffer to
   start exactly when the previous one ends.
 
-**Half-duplex:** the browser only sends mic audio while the server is `listening` and nothing is
-playing, so Nova never transcribes its own voice from the speakers. States shown in the UI:
+**Two voice modes** (switch next to the mic):
+- **Tap to talk (default):** tap the mic to start recording, tap again to send. Everything in
+  between is one utterance (`record_start` / `record_stop`): no pause can cut you off and no noise
+  can start a turn. The VAD only checks that the recording contains speech. Capped at 60 s.
+- **Hands-free:** the mic stays on and the streaming VAD ends each utterance after 0.6 s of silence.
+
+**Half-duplex:** the browser only sends mic audio while recording (tap mode) or while the server is
+`listening` and nothing is playing (hands-free), so Nova never transcribes its own voice. States shown in the UI:
 `idle → listening → transcribing → thinking → speaking → listening`.
 
 **Failure handling:** voice models missing → `voice_unavailable` toast, and text chat still
@@ -310,7 +318,8 @@ A2 protocol (tested).
 ```jsonc
 // connect: /ws/chat?extended=1&user_id=<stable id>[&session_id=…]
 // client -> server
-{ "type": "voice_start" }  { "type": "voice_stop" }
+{ "type": "voice_start" }  { "type": "voice_stop" }      // hands-free
+{ "type": "record_start" } { "type": "record_stop" }     // tap-to-talk: one utterance in between
 <binary frame>  // 16 kHz mono int16 PCM, any length (the browser sends 1024 samples)
 
 // server -> client (extended clients only)

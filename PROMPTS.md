@@ -209,6 +209,33 @@ another.
   sentence under the G-11 timetable (the 3B model read the 4:30pm ladies/cleaning row as the men's
   start). Men's-hours questions now retrieve the new document first (0.49–0.65), A2 recall@4 is
   still 20/20, and the G-11 blocks (6–10am, 5–11pm) appear in 6/6 answers.
+- **"My name is Sarosh, it's taking Saros" -- a feedback loop I had built:** the saved name was
+  fed to Whisper as a spelling hint, so once "Saros" was misheard and saved, every spoken correction
+  was heard as "Saros" again. Re-transcribing the tester's 12 name clips: hint "Saros" -> "Saros"
+  every time; hint "Sarosh" -> "Sarosh" in 11/12, no other sentence changed. Fix: only a TYPED name
+  becomes a hint (the profile records name_source), and a spoken near-miss of a typed name keeps
+  the typed spelling (a genuinely new name still replaces it). Also "Doha" -> "Nova", "plane" -> "plan".
+- **Tap-to-talk (requested for accuracy), now the default:** tap the mic to start recording, tap
+  again to send. Everything in between is ONE utterance (`record_start` / `record_stop`), so the
+  VAD can never cut the member off at a pause and background noise can never start a turn; the
+  VAD only checks that the recording contains speech (silence is not sent -- Whisper invents text
+  for it) and live captions start only once speech is heard. Capped at 60 s. Hands-free (VAD
+  end-of-speech, the original requirement) stays available via a small mode switch next to the mic.
+- **Nutrition tool, "pick any food":** the live log showed (a) no tool call for many food questions,
+  (b) only 42 foods (no pizza, cake...), (c) "6 foot" sent as height_cm=720 -> BMI 2.1. Fixes:
+  13,224 foods from USDA FoodData Central (public domain, built once by `data/build_food_db.py`)
+  behind the 59 curated entries (Pakistani dishes added as typical home-recipe averages); word
+  matching with plural folding, synonyms (donut -> doughnut), "slice" = "piece", generic "NFS"
+  entries and non-diet versions preferred, realistic default portions; answers give calories,
+  protein, carbs and fat. Feet/inches/pounds are now parsed from the member's words by code and
+  impossible heights rejected (and a failed tool may not be answered with an invented number).
+  **The router now sees only the latest message:** with the previous exchange in its context the
+  3B model wrote answers itself (0/9 tool calls), and with the previous question it re-used that
+  question's food ("carbs in rice" -> egg); latest-only measured 7/8, plus a retry with the
+  previous message for vague follow-ups. Tool turns use a neutral sources note (the "no matching
+  documents" note made the model say "our documents don't cover that" over a correct tool result).
+  Replay of the tester's session: 11/12 correct before the last router examples, then "what about
+  chicken?" fixed too.
 - **"Use a bigger model" -- measured on the tester's REAL voice (21 saved clips, references written
   from what they said):** turbo greedy 97.5% word accuracy / 18 of 21 sentences exact / ~165 ms;
   full `large-v3` 96.3% / 15 of 21 / ~290 ms; large-v3 beam 5 95.1%; hotwords and beam search did

@@ -13,6 +13,11 @@ windows, scores each with the streaming VAD, and runs this small state machine:
 
 Blips shorter than 0.25 s of speech are ignored (a cough, a click). All model calls run in
 worker threads, so other users are never blocked.
+
+TAP-TO-TALK (the default in the UI): record_start ... record_stop. Everything in between is ONE
+utterance -- no automatic end of speech, so a pause can never cut the member off and noise can
+never start a turn. The VAD still runs, only to check the recording contains real speech
+(Whisper invents text like "Thank you." for silence). Capped at 60 s.
 """
 from __future__ import annotations
 
@@ -38,7 +43,8 @@ END_SILENCE_WINDOWS = 19  # 19 x 32 ms ~ 0.6 s of silence = end of speech (0.5 s
 MIN_SPEECH_WINDOWS = 8  # < ~0.25 s of real speech = noise, ignored
 PRE_ROLL_WINDOWS = 16  # ~0.5 s kept from before the speech started (0.3 s cut a soft "ad-")
 PARTIAL_EVERY_WINDOWS = 22  # a live partial transcript every ~0.7 s
-MAX_SPEECH_WINDOWS = 470  # ~15 s: force the end of a very long utterance
+MAX_SPEECH_WINDOWS = 470  # ~15 s: force the end of a very long utterance (hands-free)
+MAX_RECORD_WINDOWS = 1875  # 60 s: tap-to-talk recording stops by itself if the member forgets
 
 
 UTTERANCE_DIR = Path(__file__).resolve().parents[2] / "logs" / "utterances"
@@ -63,7 +69,8 @@ def _save_wav(audio: np.ndarray) -> None:
 class VoiceSession:
     def __init__(self, send_extra):
         self._send = send_extra
-        self.active = False
+        self.active = False  # hands-free mode (VAD decides when an utterance ends)
+        self.recording = False  # tap-to-talk: between record_start and record_stop
         self._vad = vad.StreamingVAD()
         self._utterance_id = 0
         self.member_name: str | None = None  # from the CRM profile; helps Whisper spell it (main.py)
@@ -92,6 +99,23 @@ class VoiceSession:
         self._new_utterance()
         await self._send(VoiceStateEvent(state="idle"))
 
+    async def start_recording(self) -> None:
+        """Tap-to-talk: start one utterance; it ends only with stop_recording()."""
+        if not (asr.is_ready() and tts.is_ready() and vad.is_ready()):
+            raise VoiceUnavailable("Voice input isn't available: the speech models are not loaded "
+                                   "on the server. Text chat still works.")
+        self._vad.reset()
+        self._new_utterance()
+        self.recording = True
+        await self._send(VoiceStateEvent(state="listening"))
+
+    async def stop_recording(self) -> tuple[str, TurnTimings] | None:
+        """Tap-to-talk: the member pressed the mic again -- transcribe everything recorded."""
+        if not self.recording:
+            return None
+        self.recording = False
+        return await self._end_of_utterance()
+
     async def listen_again(self) -> None:
         """Fresh state, then 'listening' (called at start and after every spoken turn)."""
         self._vad.reset()
@@ -104,7 +128,7 @@ class VoiceSession:
     async def feed(self, data: bytes) -> tuple[str, TurnTimings] | None:
         """Process one audio frame. Returns (final transcript, timings) at the end of an
         utterance, else None."""
-        if not self.active or len(data) % 2:
+        if not (self.active or self.recording) or len(data) % 2:
             return None
         samples = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768.0
         audio = np.concatenate([self._leftover, samples])
@@ -117,6 +141,14 @@ class VoiceSession:
         self._log_level(windows, probs)
 
         for window, prob in zip(windows, probs):
+            if self.recording:  # tap-to-talk: keep everything; the member decides when it ends
+                self._speech.append(window)
+                self._since_partial += 1
+                self._voiced += prob >= SPEECH_PROB  # only to check there was real speech
+                if len(self._speech) >= MAX_RECORD_WINDOWS:
+                    self.recording = False
+                    return await self._end_of_utterance()
+                continue
             if not self._in_speech:
                 self._pre_roll.append(window)
                 if prob >= SPEECH_PROB:
@@ -132,7 +164,9 @@ class VoiceSession:
             if self._silence >= END_SILENCE_WINDOWS or len(self._speech) >= MAX_SPEECH_WINDOWS:
                 return await self._end_of_utterance()
 
-        if self._in_speech and self._since_partial >= PARTIAL_EVERY_WINDOWS and (
+        # Live captions only once real speech was heard (Whisper invents text for silence).
+        speaking = self._in_speech or (self.recording and self._voiced > 0)
+        if speaking and self._since_partial >= PARTIAL_EVERY_WINDOWS and (
             self._partial_task is None or self._partial_task.done()
         ):
             self._since_partial = 0
@@ -175,9 +209,15 @@ class VoiceSession:
 
     async def _end_of_utterance(self) -> tuple[str, TurnTimings] | None:
         timings = TurnTimings(end_of_speech_at=time.perf_counter())
-        audio, voiced = np.concatenate(self._speech), self._voiced
+        audio = np.concatenate(self._speech) if self._speech else np.empty(0, dtype=np.float32)
+        voiced = self._voiced
         self._new_utterance()
+        after = "listening" if self.active else "idle"  # hands-free keeps listening; tap mode stops
         if voiced < MIN_SPEECH_WINDOWS:
+            if not self.active:  # tap-to-talk: the member expects an answer, so say why not
+                await self._send(ErrorEvent(message="I didn't catch any speech -- please try again "
+                                            "a little closer to the mic.", code="asr_error"))
+                await self._send(VoiceStateEvent(state=after))
             return None  # just a noise blip
         await self._send(VoiceStateEvent(state="transcribing"))
         if get_settings().voice_debug_save:
@@ -191,7 +231,7 @@ class VoiceSession:
             text = ""
         timings.asr_ms = (time.perf_counter() - timings.end_of_speech_at) * 1000
         if not text:
-            await self._send(VoiceStateEvent(state="listening"))
+            await self._send(VoiceStateEvent(state=after))
             return None
         await self._send(TranscriptEvent(text=text, final=True))
         logger.info("Heard: %s", text)

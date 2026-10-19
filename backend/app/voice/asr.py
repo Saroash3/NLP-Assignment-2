@@ -105,9 +105,11 @@ VOCABULARY = (
 FIXES = [
     # The assistant's own name, heard live as "Noah", "Hain Allah" and "Dova". Words that sound
     # like it never occur in a real gym question, so they are all mapped back to "Nova".
-    (re.compile(r"\b(?:Noah?|Dova|Nowa|Nava|Noba|Mova|Nover|Novah)\b"), "Nova"),
+    (re.compile(r"\b(?:Noah?|Dova|Doha|Nowa|Nava|Noba|Mova|Nover|Novah)\b"), "Nova"),
     # "Standard Planes": retrieval then found nothing about plans (live test). No planes at a gym.
     (re.compile(r"\b[Pp]lanes\b"), "plans"),
+    (re.compile(r"\b(\d+)[ -](?:buck|month) plane\b"), r"\1 month plan"),  # "12 buck plane" (live)
+    (re.compile(r"\b[Pp]lane\b"), "plan"),
     # A clipped "ad-" turned "admission fee" into "Mission P" / "Mission fee" (live test).
     (re.compile(r"\b(?<!ad)[Mm]ission (?:fee|P)\b"), "admission fee"),
 ]

@@ -157,10 +157,24 @@ async def ws_chat(
     voice = VoiceSession(send_extra)  # microphone state of THIS connection (Assignment 3)
     greeting = None
 
+    async def _spoken_turn(utterance) -> None:
+        """A final transcript (hands-free or tap-to-talk) runs the SAME turn as typed text, plus
+        speech output. Afterwards hands-free listens again; tap-to-talk goes idle (mic closed)."""
+        text, timings = utterance
+        await send_extra(VoiceStateEvent(state="thinking"))
+        await run_turn(send, conversation_manager, websocket.app.state.llm_engine, session, text,
+                       send_extra=send_extra, speech=SpeechOutput(send_extra, timings), timings=timings)
+        # The member may have just told Nova their name: refresh it for the next turn.
+        voice.member_name = user_profile.member_name_hint(await user_profile.load(session.user_id))
+        if voice.active:
+            await voice.listen_again()
+        else:
+            await send_extra(VoiceStateEvent(state="idle"))
+
     try:
         if user_id:
             profile = await user_profile.load(user_id)
-            voice.member_name = profile.get("name")  # helps Whisper spell an unusual name
+            voice.member_name = user_profile.member_name_hint(profile)  # typed names only
             # CRM bonus: a returning member (new session) is greeted by name with their last
             # request -- as a normal assistant message (token + done), kept in the history so a
             # reply like "yes, let's continue" makes sense. Spoken too, once, when voice starts.
@@ -181,15 +195,8 @@ async def ws_chat(
 
             if message.get("bytes") is not None:
                 utterance = await voice.feed(message["bytes"])
-                if utterance:  # end of speech: the transcript is a normal user turn
-                    text, timings = utterance
-                    await send_extra(VoiceStateEvent(state="thinking"))
-                    await run_turn(send, conversation_manager, llm_engine, session, text,
-                                   send_extra=send_extra, speech=SpeechOutput(send_extra, timings),
-                                   timings=timings)
-                    # The member may have just told Nova their name: refresh it for the next turn.
-                    voice.member_name = (await user_profile.load(session.user_id)).get("name")
-                    await voice.listen_again()
+                if utterance:  # hands-free end of speech: the transcript is a normal user turn
+                    await _spoken_turn(utterance)
                 continue
             raw = message.get("text") or ""
 
@@ -242,6 +249,19 @@ async def ws_chat(
                 continue
             if client_msg.type == ClientMessageType.VOICE_STOP:
                 await voice.stop()
+                continue
+            if client_msg.type == ClientMessageType.RECORD_START:  # tap-to-talk
+                try:
+                    await voice.start_recording()
+                except VoiceUnavailable as e:
+                    await send_extra(ErrorEvent(message=str(e), code="voice_unavailable"))
+                    continue
+                asyncio.create_task(_warm_up(llm_engine))
+                continue
+            if client_msg.type == ClientMessageType.RECORD_STOP:
+                utterance = await voice.stop_recording()
+                if utterance:
+                    await _spoken_turn(utterance)
                 continue
 
             # --- type == MESSAGE ---

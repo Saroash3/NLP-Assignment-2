@@ -43,8 +43,9 @@ async def test_missing_numbers_raise_a_friendly_tool_error():
 
 # ---------------------------------------------------------------- lookup_nutrition
 
-def test_food_database_has_about_40_foods():
-    assert len({f["name"] for f in nutrition._index().values()}) >= 40
+def test_food_tables_cover_desi_dishes_and_thousands_of_usda_foods():
+    assert len({f["name"] for f in nutrition._curated().values()}) >= 55  # incl. karahi, nihari, lassi
+    assert len(nutrition._usda()) > 13000  # USDA FoodData Central (built by data/build_food_db.py)
 
 
 async def test_lookup_by_alias_and_servings():
@@ -59,7 +60,24 @@ async def test_lookup_tolerates_a_typo_and_scales_grams():
 
 async def test_unknown_food():
     with pytest.raises(ToolError, match="not in my nutrition database"):
-        await nutrition.run({"food": "dragon steak"}, CTX)
+        await nutrition.run({"food": "zzqx blorp"}, CTX)
+
+
+async def test_usda_dishes_with_portions():
+    """Live-demo misses: pizza slice, chocolate cake, burger -- now found, with a real portion."""
+    pizza = await nutrition.run({"food": "pizza", "portion": "slice"}, CTX)
+    assert pizza["food"].startswith("Pizza") and "piece" in pizza["totals_for"]
+    assert 150 < pizza["calories"] < 600 and {"protein_g", "carbs_g", "fat_g"} <= set(pizza)
+    burger = await nutrition.run({"food": "beef burger"}, CTX)  # no name has both words
+    assert "Hamburger" in burger["food"]
+    cola = await nutrition.run({"food": "cola", "portion": "can"}, CTX)
+    assert "diet" not in cola["food"].lower() and cola["calories"] > 50  # not the diet version
+
+
+async def test_desi_dishes_and_aliases():
+    karahi = await nutrition.run({"food": "chicken karahi"}, CTX)
+    assert karahi["food"] == "chicken karahi" and karahi["source"] == "Zor food table"
+    assert (await nutrition.run({"food": "doodh patti"}, CTX))["food"] == "chai"
 
 
 # ---------------------------------------------------------------- workout_schedule
@@ -277,3 +295,37 @@ def test_returning_member_is_greeted_and_profile_reaches_the_prompt(temp_profile
     assert prompt[1] == {"role": "assistant", "content": greeting["content"]}  # greeting is in history
     log = asyncio.run(user_profile.load("member-1"))["interactions"]
     assert log[-1]["request"] == "Yes, tell me more"  # this visit was recorded too
+
+
+async def test_only_a_typed_name_becomes_a_speech_hint(temp_profiles):
+    """Regression (live demo): a misheard spoken name fed back to Whisper locked the mistake in."""
+    spoken = ToolContext(user_id="u1", spoken=True)
+    await user_profile.run({"action": "update", "name": "Saros"}, spoken)
+    assert user_profile.member_name_hint(await user_profile.load("u1")) is None
+    await user_profile.run({"action": "update", "name": "Sarosh"}, ToolContext(user_id="u1"))  # typed
+    assert user_profile.member_name_hint(await user_profile.load("u1")) == "Sarosh"
+
+
+async def test_spoken_near_miss_keeps_the_typed_name_but_a_new_name_replaces_it(temp_profiles):
+    await user_profile.run({"action": "update", "name": "Sarosh"}, ToolContext(user_id="u2"))  # typed
+    spoken = ToolContext(user_id="u2", spoken=True)
+    await user_profile.run({"action": "update", "name": "Saros"}, spoken)  # misheard
+    assert (await user_profile.load("u2"))["name"] == "Sarosh"
+    await user_profile.run({"action": "update", "name": "Abdullah"}, spoken)  # really a new name
+    assert (await user_profile.load("u2"))["name"] == "Abdullah"
+
+
+
+async def test_height_in_feet_is_converted_and_nonsense_is_rejected():
+    """Live demo: "6 foot" became height_cm=720 and BMI 2.1 'underweight'."""
+    assert (await metrics({"metric": "bmi", "weight_kg": 90, "height_ft": 6, "height_in": 1}, CTX))["bmi"] == 26.2
+    with pytest.raises(ToolError, match="doesn't look right"):
+        await metrics({"metric": "bmi", "weight_kg": 110, "height_cm": 720}, CTX)
+
+
+def test_feet_and_pounds_are_read_from_the_members_words():
+    call = {"tool": "calculate_fitness_metrics", "arguments": {"metric": "bmi", "weight_kg": 110, "height_cm": 720}}
+    fixed = orchestrator.apply_unit_hints(call, "If my height is 6 foot and my weight is 110 kg what is my BMI?")
+    assert fixed["arguments"] == {"metric": "bmi", "weight_kg": 110, "height_ft": 6.0, "height_in": 0.0}
+    fixed = orchestrator.apply_unit_hints(call, "I'm 5 ft 9 and 180 pounds")
+    assert fixed["arguments"]["height_in"] == 9.0 and fixed["arguments"]["weight_kg"] == 81.6

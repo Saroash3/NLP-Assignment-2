@@ -61,6 +61,15 @@ Examples:
 "I squatted 100 kg for 5 reps, what's my max?" -> {{"tool": "calculate_fitness_metrics", "arguments": {{"metric": "one_rep_max", "lifted_kg": 100, "reps": 5}}}}
 "How much protein is in 2 eggs?" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "egg", "servings": 2}}}}
 "Calories in 150 grams of rice" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "rice", "grams": 150}}}}
+"How many calories in two boiled eggs?" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "boiled egg", "servings": 2}}}}
+"Give me the nutrient breakdown of a banana" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "banana"}}}}
+"How much carbs in one egg?" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "egg", "servings": 1}}}}
+"How many calories in a slice of pizza?" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "pizza", "portion": "slice"}}}}
+"Calories in a bowl of biryani" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "biryani", "portion": "bowl"}}}}
+"Is chocolate cake high in sugar?" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "chocolate cake", "portion": "slice"}}}}
+"What about chicken?" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "chicken"}}}}
+"And a banana?" -> {{"tool": "lookup_nutrition", "arguments": {{"food": "banana"}}}}
+"What's my BMI? I'm 6 foot 1 and 90 kg" -> {{"tool": "calculate_fitness_metrics", "arguments": {{"metric": "bmi", "weight_kg": 90, "height_ft": 6, "height_in": 1}}}}
 "Add chest day on Tuesday, 45 minutes" -> {{"tool": "workout_schedule", "arguments": {{"action": "add", "day": "Tuesday", "workout": "chest day", "duration_min": 45}}}}
 "What workouts do I have this week?" -> {{"tool": "workout_schedule", "arguments": {{"action": "list"}}}}
 "Remove my Friday workout" -> {{"tool": "workout_schedule", "arguments": {{"action": "delete", "day": "Friday"}}}}
@@ -71,6 +80,7 @@ Examples:
 "What is my name?" -> {{"tool": "user_profile", "arguments": {{"action": "get"}}}}
 "Tell me my name." -> {{"tool": "user_profile", "arguments": {{"action": "get"}}}}
 "No, it's actually Sarah, not Sara" -> {{"tool": "user_profile", "arguments": {{"action": "update", "name": "Sarah"}}}}
+"It's Sara with an H at the end" -> {{"tool": "user_profile", "arguments": {{"action": "update", "name": "Sarah"}}}}
 "How much is the Elite plan?" -> NONE
 "When is the Zumba class?" -> NONE
 "What classes do you have on Tuesdays?" -> NONE
@@ -127,6 +137,24 @@ async def run_tool(name: str, arguments: dict, ctx: ToolContext,
         return False, FRIENDLY_ERROR
 
 
+FEET = re.compile(r"(\d+(?:\.\d+)?)\s*(?:foot|feet|ft|')\s*(?:(\d+(?:\.\d+)?)\s*(?:inches|inch|in|\")?)?", re.I)
+POUNDS = re.compile(r"(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)\b", re.I)
+
+
+def apply_unit_hints(call: dict, user_text: str) -> dict:
+    """Read feet/inches and pounds straight from the member's words, so the LLM never converts
+    units (live test: "6 foot" became height_cm=720). Only for calculate_fitness_metrics."""
+    if call["tool"] != "calculate_fitness_metrics":
+        return call
+    args = dict(call["arguments"])
+    if feet := FEET.search(user_text):
+        args.pop("height_cm", None)
+        args["height_ft"], args["height_in"] = float(feet[1]), float(feet[2] or 0)
+    if pounds := POUNDS.search(user_text):
+        args["weight_kg"] = round(float(pounds[1]) * 0.4536, 1)
+    return {**call, "arguments": args}
+
+
 def tool_result_message(name: str, ok: bool, result: dict | str) -> str:
     """The system message that hands the tool's result to the main (persona) model."""
     if ok:
@@ -134,12 +162,15 @@ def tool_result_message(name: str, ok: bool, result: dict | str) -> str:
                 f"{json.dumps(result, ensure_ascii=False)}\nThese values are FINAL and correct: "
                 "repeat them exactly as written. They are TOTALS for the whole amount asked (e.g. "
                 "all the eggs together), never per item, so don't say 'each'. "
-                "Never recalculate or change a number. This request is IN SCOPE (the member's own "
-                "fitness), so do not refuse. Answer in 1-3 short, friendly sentences, speaking "
-                "directly to the member as if you worked it out yourself -- e.g. \"Two eggs have "
-                "about 13 grams of protein.\" -- never say 'the tool', 'the result' or 'the "
-                "system'. Don't add any gym facts (classes, times, prices) that are not in the "
-                "SOURCES message.")
+                "Never recalculate or change a number. " + (
+                    "For food, give calories, protein, carbs and fat in one short sentence (e.g. "
+                    "\"Two eggs: 155 calories, 13 g protein, 1 g carbs and 11 g fat.\"), unless the "
+                    "member asked for only one of them. " if name == "lookup_nutrition" else "") +
+                "This request is IN SCOPE (the member's own fitness), so do not refuse. Answer in "
+                "1-3 short, friendly sentences, speaking directly to the member as if you worked "
+                "it out yourself -- never say 'the tool', 'the result' or 'the system'. Don't add "
+                "any gym facts (classes, times, prices) that are not in the SOURCES message.")
     return (f"TOOL FAILED -- the system tried {name} for the member's latest message and it "
             f"failed: {result}\nThis request is IN SCOPE. Tell the member kindly, in one or two "
-            "sentences, what went wrong or which details you still need. Don't mention JSON.")
+            "sentences, what went wrong or which details you still need. Do NOT state or guess any "
+            "result or number yourself (no BMI, calories or weights). Don't mention JSON.")
